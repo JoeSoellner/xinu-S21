@@ -1,0 +1,7 @@
+Does your program output any garbage? If yes, why?
+- Somewhat, it seems there are some sort of concurrency issues that are jumbling the output of the program.
+- It is mostly readable. There is also sometimes an extra 'xsh' in the middle of the output.
+
+Are all the produced values getting consumed? Check your program for a small count like 20.
+- No, some values are not being consumed.
+
