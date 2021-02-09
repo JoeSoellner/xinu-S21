@@ -12,7 +12,7 @@ sid32 mutex;
 shellcmd xsh_prodcons(int nargs, char *args[])
 {
 	if (nargs > 2) {
-		fprintf(stderr, "%s: too many arguments\n", args[0]);
+		fprintf(stderr, "Syntax: run prodcons \[counter\]\n");
 		return 1;
 	}
 	

@@ -15,16 +15,18 @@ shellcmd xsh_run(int nargs, char *args[]) {
     args++;
     nargs--;
 
-    if(strncmp(args[0], "hello", 5) == 0 && nargs == 2) {
+    if(strncmp(args[0], "hello", 5) == 0) {
       /* create a process with the function as an entry point. */
       resume (create((void *)xsh_hello, 4096, 20, "hello", 2, nargs, args));
 	    return 1;
-    }
-
-	  if(strncmp(args[0], "prodcons", 8) == 0 && nargs == 2) {
+    } else if(strncmp(args[0], "prodcons", 8) == 0) {
       /* create a process with the function as an entry point. */
       resume (create((void *)xsh_prodcons, 4096, 20, "prodcons", 2, nargs, args));
 	    return 1;
+    } else {
+      printf("hello\n");
+      printf("list\n");
+	    printf("prodcons\n");
+      return 1;
     }
-	return 1;
 }

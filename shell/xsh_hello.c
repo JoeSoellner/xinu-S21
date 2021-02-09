@@ -12,10 +12,10 @@ shellcmd xsh_hello(int nargs, char *args[]) {
 
 	/* Check argument count */
 	if (nargs > 2) {
-		fprintf(stderr, "%s: too many arguments\n", args[0]);
+		fprintf(stderr, "Syntax: run hello \[name\]\n");
 		return 1;
 	} else if (nargs < 2) {
-		fprintf(stderr, "%s: too few arguments\n", args[0]);
+		fprintf(stderr, "Syntax: run hello \[name\]\n");
 		return 1;
 	} else {
 		printf("Hello %s, Welcome to the world of Xinu!!\n", args[1]);
