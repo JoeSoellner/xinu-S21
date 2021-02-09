@@ -7,13 +7,10 @@ void producer(int count) {
     // each time.
     //print produced value e.g. produced : 8
 
-	for(int i = 0; i < count; i++) {
+	for(int i = 0; i < count + 1; i++) {
 		wait(can_write);
 		n = i;
 		printf("produced: %d\n", i);
 		signal(can_read);
 	}
 }
-
-
-

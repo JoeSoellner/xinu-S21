@@ -15,12 +15,12 @@
 
 #define	SHELL_BAN0	"\033[1;31m"
 #define SHELL_BAN1      "------------------------------------------"
-#define SHELL_BAN2      "   __    __   _____    _   _    _    _    "
+#define SHELL_BAN2      "   __      __   _____    _    _    _    _    "
 #define SHELL_BAN3      "   \\ \\  / /  |__ __|  | \\ | |  | |  | |   "
 #define SHELL_BAN4      "    \\ \\/ /     | |    |  \\| |  | |  | |   "
 #define SHELL_BAN5      "    / /\\ \\    _| |_   | \\   |  | |  | |   "
-#define SHELL_BAN6      "   / /  \\ \\  |     |  | | \\ |  \\  --  /   "
-#define SHELL_BAN7      "   --    --   -----    -   -     ----     "
+#define SHELL_BAN6      "   / /  \\ \\  |     |  | | \\ |  \\ --  /   "
+#define SHELL_BAN7      "   --     --    -----    -    -     ----     "
 #define SHELL_BAN8      "------------------------------------------"
 #define	SHELL_BAN9	"\033[0;39m\n"
 
