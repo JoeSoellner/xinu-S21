@@ -27,7 +27,7 @@ shellcmd xsh_prodcons(int nargs, char *args[])
 	
 	// init semaphores
 	can_write = semcreate(1);
-	can_read = semcreate(-1);
+	can_read = semcreate(0);
 	//mutex = semcreate(0);
 	//create the process producer and consumer and put them in ready queue.
 	//Look at the definations of function create and resume in the system folder for reference.
