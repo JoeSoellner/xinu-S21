@@ -5,6 +5,9 @@
 
 /*Now global variable n will be on Heap so it is accessible all the processes i.e. consume and produce*/
 int n;
+sid32 can_write;
+sid32 can_read;
+sid32 mutex;
 
 shellcmd xsh_prodcons(int nargs, char *args[])
 {
@@ -19,9 +22,13 @@ shellcmd xsh_prodcons(int nargs, char *args[])
 		int arg1ToInt = atoi(args[1]);
 		count = arg1ToInt;
 	} else {
-		count = 2000;
+		count = 200;
 	}
 	
+	// init semaphores
+	can_write = semcreate(1);
+	can_read = semcreate(-1);
+	//mutex = semcreate(0);
 	//create the process producer and consumer and put them in ready queue.
 	//Look at the definations of function create and resume in the system folder for reference.
 	resume(create(producer, 1024, 20, "producer", 1, count));
