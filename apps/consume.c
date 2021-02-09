@@ -7,8 +7,8 @@ void consumer(int count) {
 	// print consumed value e.g. consumed : 8
 
 	for(int i = 0; i <= count; i++) {
-		//wait(can_read);
+		wait(can_read);
 		printf("consumed: %d\n", n);
-		//signal(can_write);
+		signal(can_write);
 	}
 }
