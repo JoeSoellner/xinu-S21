@@ -28,7 +28,7 @@ shellcmd xsh_prodcons_bb(int nargs, char *args[]) {
 	int iterationsPerConsumer = numConsumerIterations / numConsumers;
 	int remainderConsumerIterations = numConsumerIterations % numConsumers;
 
-	if(numProducerIterations != numConsumerIterations) {
+	if(numProducers * numProducerIterations != numConsumers * numConsumerIterations) {
 		fprintf(stderr, "Iteration Mismatch Error: the number of producer(s) iteration does not match the consumer(s) iteration\n");
 		return 1;
 	}
