@@ -21,6 +21,7 @@ const	struct	cmdent	cmdtab[] = {
 	{"memdump",	FALSE,	xsh_memdump},
 	{"memstat",	FALSE,	xsh_memstat},
 	{"prodcons",	FALSE,	xsh_prodcons},
+	{"prodcons_bb",	FALSE,	xsh_prodcons_bb},
 	{"ps",		FALSE,	xsh_ps},
 	{"run",		FALSE,	xsh_run},
 	{"sleep",	FALSE,	xsh_sleep},
