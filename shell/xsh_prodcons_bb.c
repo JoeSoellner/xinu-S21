@@ -21,12 +21,6 @@ shellcmd xsh_prodcons_bb(int nargs, char *args[]) {
 	int numConsumers = atoi(args[2]);
 	int numProducerIterations = atoi(args[3]);
 	int numConsumerIterations = atoi(args[4]);
-	int totalCount = numProducerIterations;
-
-	int iterationsPerProducer = numProducerIterations / numProducers;
-	int remainderProducerIterations = numProducerIterations % numProducers;
-	int iterationsPerConsumer = numConsumerIterations / numConsumers;
-	int remainderConsumerIterations = numConsumerIterations % numConsumers;
 
 	if(numProducers * numProducerIterations != numConsumers * numConsumerIterations) {
 		fprintf(stderr, "Iteration Mismatch Error: the number of producer(s) iteration does not match the consumer(s) iteration\n");
@@ -46,27 +40,11 @@ shellcmd xsh_prodcons_bb(int nargs, char *args[]) {
   
   	//create producer and consumer processes and put them in ready queue
 	for(int i = 0; i < numProducers; i++) {
-		int count;
-		if(remainderProducerIterations == 0) {
-			count = iterationsPerProducer;
-		} else {
-			count = iterationsPerProducer + 1;
-			remainderProducerIterations -= 1;
-		}
-
-		resume(create(producer_bb, 1024, 20, "producer_bb", 2, i, count));
+		resume(create(producer_bb, 1024, 20, "producer_bb", 2, i, numProducerIterations));
 	}
 
 	for(int i = 0; i < numConsumers; i++) {
-		int count;
-		if(remainderConsumerIterations == 0) {
-			count = iterationsPerConsumer;
-		} else {
-			count = iterationsPerConsumer + 1;
-			remainderConsumerIterations -= 1;
-		}
-
-		resume(create(consumer_bb, 1024, 20, "consumer_bb", 2, i, count));
+		resume(create(consumer_bb, 1024, 20, "consumer_bb", 2, i, numConsumerIterations));
 	}
 	return 0;
 }
