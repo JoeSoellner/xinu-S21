@@ -21,9 +21,14 @@ shellcmd xsh_prodcons_bb(int nargs, char *args[]) {
 	int numConsumers = atoi(args[2]);
 	int numProducerIterations = atoi(args[3]);
 	int numConsumerIterations = atoi(args[4]);
-	int count = numProducers * numProducerIterations;
+	int totalCount = numProducerIterations;
 
-	if(numProducers * numProducerIterations != numConsumers * numConsumerIterations) {
+	int iterationsPerProducer = numProducerIterations / numProducers;
+	int remainderProducerIterations = numProducerIterations % numProducers;
+	int iterationsPerConsumer = numConsumerIterations / numConsumers;
+	int remainderConsumerIterations = numConsumerIterations % numConsumers;
+
+	if(numProducerIterations != numConsumerIterations) {
 		fprintf(stderr, "Iteration Mismatch Error: the number of producer(s) iteration does not match the consumer(s) iteration\n");
 		return 1;
 	}
@@ -41,20 +46,26 @@ shellcmd xsh_prodcons_bb(int nargs, char *args[]) {
   
   	//create producer and consumer processes and put them in ready queue
 	for(int i = 0; i < numProducers; i++) {
-		// all this for creating a producer_i string in each loop
-		// i love C ! :)))
-		/*
-		char* producerID = calloc(sizeof(char), 10);
-		char currIndex;
-		sprintf(currIndex, "%d", i);
-		producerID[0] = "producer_";
-		producerID[10] = currIndex;
-		*/
+		int count;
+		if(remainderProducerIterations == 0) {
+			count = iterationsPerProducer;
+		} else {
+			count = iterationsPerProducer + 1;
+			remainderProducerIterations -= 1;
+		}
+
 		resume(create(producer_bb, 1024, 20, "producer_bb", 2, i, count));
-		//free(producerID);
 	}
 
 	for(int i = 0; i < numConsumers; i++) {
+		int count;
+		if(remainderConsumerIterations == 0) {
+			count = iterationsPerConsumer;
+		} else {
+			count = iterationsPerConsumer + 1;
+			remainderConsumerIterations -= 1;
+		}
+
 		resume(create(consumer_bb, 1024, 20, "consumer_bb", 2, i, count));
 	}
 	return 0;
