@@ -1,11 +1,17 @@
 #include <xinu.h>
 #include <shprototypes.h>
+#include <future_prodcons.h>
+#include <future.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>  
 
 void printPrograms() {
   printf("hello\n");
   printf("list\n");
   printf("prodcons_bb\n");
   printf("prodcons\n");
+  printf("futest\n");
 }
  
 shellcmd xsh_run(int nargs, char *args[]) {
@@ -31,8 +37,58 @@ shellcmd xsh_run(int nargs, char *args[]) {
       /* create a process with the function as an entry point. */
       resume (create((void *)xsh_prodcons, 4096, 20, "prodcons", 2, nargs, args));
 	    return 1;
+    } else if(strncmp(args[0], "futest", 7) == 0) {
+      /* create a process with the function as an entry point. */
+      resume (create((void *)future_prodcons, 4096, 20, "futest", 2, nargs, args));
+	    return 1;
     } else {
       printPrograms();
       return 1;
     }
+}
+
+char *val;
+
+void future_prodcons(int nargs, char *args[]) {
+    if(nargs < 3) {
+      fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+    }
+    
+    print_sem = semcreate(1);
+    future_t* f_exclusive;
+    f_exclusive = future_alloc(FUTURE_EXCLUSIVE, sizeof(int), 1);
+
+    // First, try to iterate through the arguments and make sure they are all valid based on the requirements 
+    // (you may assume the argument after "s" there is always a number)
+    for (int i = 3; i < nargs; i++) {
+      if(strcmp(args[i], "-pc") != 0 && strcmp(args[i], "g") != 0 && strcmp(args[i], "g") != 0
+        && (char) args[i][0] < '0' && (char) args[i][0] > '9') {
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        return;
+      }
+    }
+
+    int num_args = nargs - 1;  // keeping number of args to create the array
+    int i = 2; // reseting the index 
+    val = (char *) getmem(num_args); // initializing the array to keep the "s" numbers
+
+    // Iterate again through the arguments and create the following processes based on the passed argument ("g" or "s VALUE")
+    while (i < nargs)
+    {
+      if (strcmp(args[i], "g") == 0){
+        char id[10];
+        sprintf(id, "fcons%d",i);
+        resume(create(future_cons, 2048, 20, id, 1, f_exclusive));    
+      }
+      if (strcmp(args[i], "s") == 0){
+        i++;
+        uint8 number = atoi(args[i]);
+        val[i] = number;
+        resume(create(future_prod, 2048, 20, "fprod1", 2, f_exclusive, &val[i]));
+        sleepms(5);
+      }
+      i++;
+    }
+    sleepms(100);
+    future_free(f_exclusive);
 }
