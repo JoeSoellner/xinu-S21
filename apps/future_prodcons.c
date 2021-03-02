@@ -25,9 +25,13 @@ uint future_prod(future_t *fut, char *value)
 
 uint future_cons(future_t *fut)
 {
+  //fut->state = 0;
+  //printf("%d: yo 6\n", (int) fut->state);
   char *i = NULL;
   int status;
+  //printf("%d: yo 7\n", (int) fut->state);
   status = (int)future_get(fut, i);
+  //printf("%d: yo 8\n", (int) fut->state);
   if (status < 1)
   {
     wait(print_sem);

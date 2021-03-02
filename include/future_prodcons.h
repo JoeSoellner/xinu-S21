@@ -5,5 +5,4 @@ uint future_cons(future_t* fut);
 void future_prodcons(int nargs, char *args[]);
 
 extern char *val;
-extern sid32 print_sem; 
-//sid32 print_sem; 
+extern sid32 print_sem;

@@ -1,3 +1,5 @@
+.vscode
+
 # Local files
 compile/Makedefs
 compile/.defs

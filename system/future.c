@@ -39,31 +39,41 @@ syscall future_free(future_t* f) {
 }
 
 syscall future_get(future_t* f,  char* out) {
+  //printf("state: %d ", (int) f->state);
   if(f->state == FUTURE_EMPTY) {
+    printf("hello\n");
     f->state = FUTURE_WAITING;
     return OK;
   } else if (f->state == FUTURE_WAITING) {
+    printf("hello\n");
     return SYSERR;
   } else if (f->state == FUTURE_READY) {
+    printf("hello\n");
     f->state = FUTURE_EMPTY;
     *out = *(f->data);
     return OK;
   }
+  //printf("state: %d ", (int) f->state);
   return SYSERR;
 }
 
 syscall future_set(future_t* f, char* in) {
+  //printf("state: %d ", (int) f->state);
   if(f->state == FUTURE_EMPTY) {
+    printf("hello\n");
     f->state = FUTURE_READY;
     *(f->data) = *in;
     // idk if i need to set size to size of in's data
     return OK;
     // might need to do some extra stuff here, not sure
   } else if (f->state == FUTURE_WAITING) {
+    printf("hello\n");
     f->state = FUTURE_EMPTY;
     return OK;
   } else if (f->state == FUTURE_READY) {
+    printf("hello\n");
     return SYSERR;
   }
+  //printf("state: %d ", (int) f->state);
   return SYSERR;
 }

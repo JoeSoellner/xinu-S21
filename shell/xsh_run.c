@@ -3,8 +3,8 @@
 #include <future_prodcons.h>
 #include <future.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>  
+#include <string.h>
 
 void printPrograms() {
   printf("hello\n");
@@ -60,11 +60,30 @@ void future_prodcons(int nargs, char *args[]) {
 
     // First, try to iterate through the arguments and make sure they are all valid based on the requirements 
     // (you may assume the argument after "s" there is always a number)
-    for (int i = 3; i < nargs; i++) {
-      if(strcmp(args[i], "-pc") != 0 && strcmp(args[i], "g") != 0 && strcmp(args[i], "g") != 0
-        && (char) args[i][0] < '0' && (char) args[i][0] > '9') {
-        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
-        return;
+    for (int i = 1; i < nargs; i++) {
+      if(strcmp(args[i], "-pc") == 0) {
+        continue;
+      } else if(strcmp(args[i], "g") == 0) {
+        continue;
+      } else if(strcmp(args[i], "s") == 0) {
+        continue;
+      } else {
+        int isNumber = 1;
+
+        for(int j = 0; j < strlen(args[i]); j++){
+          char currChar = (char) args[i][j];
+          if(currChar < '0' || currChar > '9') {
+            isNumber = 0;
+            break;
+          }
+        }
+
+        if(isNumber == 1) {
+          continue;
+        } else {
+          fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+          return;
+        }
       }
     }
 
@@ -78,7 +97,8 @@ void future_prodcons(int nargs, char *args[]) {
       if (strcmp(args[i], "g") == 0){
         char id[10];
         sprintf(id, "fcons%d",i);
-        resume(create(future_cons, 2048, 20, id, 1, f_exclusive));    
+        //printf("%d: yo 5\n", (int) f_exclusive->state);
+        resume(create(future_cons, 2048, 20, id, 1, f_exclusive));
       }
       if (strcmp(args[i], "s") == 0){
         i++;
