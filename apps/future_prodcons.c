@@ -5,8 +5,9 @@
 
 sid32 print_sem;
 
-uint future_prod(future_t *fut, char *value)
+uint future_prod(future_t *fut, char *value, int state)
 {
+  fut->state = state;
   int status;
   wait(print_sem);
   printf("Producing %d\n", *value);
@@ -23,15 +24,16 @@ uint future_prod(future_t *fut, char *value)
   return OK;
 }
 
-uint future_cons(future_t *fut)
+uint future_cons(future_t *fut, int state)
 {
-  //fut->state = 0;
-  //printf("%d: yo 6\n", (int) fut->state);
+  //fut->state = state;
+  //printf("%d", fut->state);
+ // printf("cons state %d:\n", (int) fut->state);
   char *i = NULL;
   int status;
   //printf("%d: yo 7\n", (int) fut->state);
   status = (int)future_get(fut, i);
-  //printf("%d: yo 8\n", (int) fut->state);
+  //printf("cons state %d:\n", (int) fut->state);
   if (status < 1)
   {
     wait(print_sem);
@@ -44,3 +46,17 @@ uint future_cons(future_t *fut)
   signal(print_sem);
   return OK;
 }
+
+/*
+uint future_prod_save_state(future_t* fut, char* value, int state) {
+  fut->state = state;
+  uint res = future_prod(fut, value);
+  return res;
+}
+
+uint future_cons_save_state(future_t* fut, int state) {
+  fut->state = state;
+  uint res = future_cons(fut);
+  return res;
+}
+*/

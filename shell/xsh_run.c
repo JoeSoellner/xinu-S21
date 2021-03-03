@@ -98,17 +98,18 @@ void future_prodcons(int nargs, char *args[]) {
         char id[10];
         sprintf(id, "fcons%d",i);
         //printf("%d: yo 5\n", (int) f_exclusive->state);
-        resume(create(future_cons, 2048, 20, id, 1, f_exclusive));
+        resume(create(future_cons, 2048, 20, "fcons1", 2, f_exclusive, f_exclusive->state));
       }
       if (strcmp(args[i], "s") == 0){
         i++;
         uint8 number = atoi(args[i]);
         val[i] = number;
-        resume(create(future_prod, 2048, 20, "fprod1", 2, f_exclusive, &val[i]));
+        resume(create(future_prod, 2048, 20, "fprod1", 3, f_exclusive, &val[i], f_exclusive->state));
         sleepms(5);
       }
       i++;
     }
+    // run futest -pc g s 10
     sleepms(100);
     future_free(f_exclusive);
 }
