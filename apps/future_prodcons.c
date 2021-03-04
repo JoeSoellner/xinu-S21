@@ -5,7 +5,7 @@
 
 sid32 print_sem;
 
-uint future_prod(future_t *fut, char *value, int state)
+uint future_prod(future_t *fut, char *value)
 {
   int status;
   wait(print_sem);
@@ -23,7 +23,7 @@ uint future_prod(future_t *fut, char *value, int state)
   return OK;
 }
 
-uint future_cons(future_t *fut, int state)
+uint future_cons(future_t *fut)
 {
   char *i = NULL;
   int status;
@@ -40,17 +40,3 @@ uint future_cons(future_t *fut, int state)
   signal(print_sem);
   return OK;
 }
-
-/*
-uint future_prod_save_state(future_t* fut, char* value, int state) {
-  fut->state = state;
-  uint res = future_prod(fut, value);
-  return res;
-}
-
-uint future_cons_save_state(future_t* fut, int state) {
-  fut->state = state;
-  uint res = future_cons(fut);
-  return res;
-}
-*/

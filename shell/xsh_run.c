@@ -97,13 +97,13 @@ void future_prodcons(int nargs, char *args[]) {
       if (strcmp(args[i], "g") == 0){
         char id[10];
         sprintf(id, "fcons%d",i);
-        resume(create(future_cons, 2048, 20, "fcons1", 2, f_exclusive));
+        resume(create(future_cons, 2048, 20, "fcons1", 1, f_exclusive));
       }
       if (strcmp(args[i], "s") == 0){
         i++;
         uint8 number = atoi(args[i]);
         val[i] = number;
-        resume(create(future_prod, 2048, 20, "fprod1", 3, f_exclusive, &val[i]));
+        resume(create(future_prod, 2048, 20, "fprod1", 2, f_exclusive, &val[i]));
         sleepms(5);
       }
       i++;

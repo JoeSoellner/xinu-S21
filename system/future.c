@@ -33,7 +33,7 @@ syscall future_free(future_t* f) {
   syscall freeFuturePtrResult = freemem(f, sizeof(future_t));
 
   restore(mask);
-  if(freeMemResult == SYSERR || killResult == SYSERR) {
+  if(freeMemResult == SYSERR || killResult == SYSERR || freeFuturePtrResult == SYSERR) {
     return SYSERR;
   } else {
     return OK;
@@ -82,6 +82,7 @@ syscall future_set(future_t* f, char* in) {
   }
   
   if (f->state == FUTURE_WAITING) {
+    memcpy(f->data, in, strlen(in));
     resume(f->pid);
     f->pid = -1;
     f->state = FUTURE_EMPTY;
