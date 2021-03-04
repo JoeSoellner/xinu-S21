@@ -10,17 +10,12 @@ future_t* future_alloc(future_mode_t mode, uint size, uint nelem)
   // init block of memory of size 'size' for data attribute of future
   char* tempData = getmem(size);
 
-  struct future_t newFuture = {
-    .data = tempData,
-    .size = size,
-    .state = FUTURE_EMPTY,
-    .mode = mode,
-    .pid = 1
-    // idk if i need to init pid
-  };
-
-  struct future_t *futurePtr = &newFuture;
-  futurePtr = &newFuture;
+  struct future_t *futurePtr = getmem(sizeof(future_t));
+  futurePtr->data = tempData;
+  futurePtr->size = size;
+  futurePtr->state = FUTURE_EMPTY;
+  futurePtr->mode = mode;
+  futurePtr->pid = -1;
 
   restore(mask);
   return futurePtr;
@@ -29,9 +24,13 @@ future_t* future_alloc(future_mode_t mode, uint size, uint nelem)
 syscall future_free(future_t* f) {
   intmask mask;
   mask = disable();
+  syscall killResult = OK;
 
   syscall freeMemResult = freemem(f->data, f->size);
-  syscall killResult = kill(f->pid);
+  if(f->pid != -1) {
+    killResult = kill(f->pid);
+  }
+  syscall freeFuturePtrResult = freemem(f, sizeof(future_t));
 
   restore(mask);
   if(freeMemResult == SYSERR || killResult == SYSERR) {
@@ -44,8 +43,7 @@ syscall future_free(future_t* f) {
 syscall future_get(future_t* f,  char* out) {
   intmask mask;
   mask = disable();
-  //printf("hello");
-  //printf("state get : %d ", (int) f->state);
+
   if(f->state == FUTURE_EMPTY) {
     f->state = FUTURE_WAITING;
     f->pid = getpid();
@@ -68,30 +66,14 @@ syscall future_get(future_t* f,  char* out) {
     restore(mask);
     return OK;
   }
-
- /*
-   if(f->state == FUTURE_EMPTY) {
-    f->state = FUTURE_WAITING;
-    return OK;
-  } else if (f->state == FUTURE_WAITING) {
-    return SYSERR;
-  } else if (f->state == FUTURE_READY) {
-    f->state = FUTURE_EMPTY;
-    memcpy(out, f->data, f->size);
-    return OK;
-  }
-  */
-  //printf("get state: %d ", (int) f->state);
   return SYSERR;
 }
 
 syscall future_set(future_t* f, char* in) {
   intmask mask;
   mask = disable();
-  //printf("state: %d ", (int) f->state);
+
   if(f->state == FUTURE_EMPTY) {
-    //printf("in: %s, len: %d", in, strlen(in));
-    //printf("hello");
     memcpy(f->data, in, strlen(in));
     f->size = strlen(in);
     f->state = FUTURE_READY;
@@ -101,6 +83,7 @@ syscall future_set(future_t* f, char* in) {
   
   if (f->state == FUTURE_WAITING) {
     resume(f->pid);
+    f->pid = -1;
     f->state = FUTURE_EMPTY;
     restore(mask);
     return OK;
@@ -110,20 +93,5 @@ syscall future_set(future_t* f, char* in) {
     restore(mask);
     return SYSERR;
   }
-    /*
-   if(f->state == FUTURE_EMPTY) {
-    f->state = FUTURE_READY;
-    memcpy(f->data, in, strlen(in));
-    // idk if i need to set size to size of in's data
-    return OK;
-    // might need to do some extra stuff here, not sure
-  } else if (f->state == FUTURE_WAITING) {
-    f->state = FUTURE_EMPTY;
-    return OK;
-  } else if (f->state == FUTURE_READY) {
-    return SYSERR;
-  }
-  */
-  //printf("set state: %d ", (int) f->state);
   return SYSERR;
 }
