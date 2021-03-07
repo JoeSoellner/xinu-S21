@@ -52,7 +52,7 @@ char *val;
 
 void future_prodcons(int nargs, char *args[]) {
     if(nargs < 2) {
-      fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+      fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f NUMBER][--free]\n");
       return;
     }
     
@@ -87,7 +87,7 @@ void future_prodcons(int nargs, char *args[]) {
         if(isNumber == 1) {
           continue;
         } else {
-          fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+          fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f NUMBER][--free]\n");
           return;
         }
       }
@@ -96,14 +96,14 @@ void future_prodcons(int nargs, char *args[]) {
     // check flags
     if(strcmp(args[1], "-f") == 0) {
       if(nargs != 3) {
-        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f NUMBER][--free]\n");
         return;
       }
 
       resume(create(future_fib, 2048, 20, "fFibMain", 2, nargs, args));
     } else if(strcmp(args[1], "--free") == 0) {
       if(nargs != 2) {
-        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f NUMBER][--free]\n");
         return;
       }
 
@@ -111,7 +111,7 @@ void future_prodcons(int nargs, char *args[]) {
       resume(create(future_free_test, 2048, 20, "futFreeTest", 2, 0, NULL));
     } else if(strcmp(args[1], "-pc") == 0) {
       if(nargs < 3) {
-        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f NUMBER][--free]\n");
         return;
       }
 
