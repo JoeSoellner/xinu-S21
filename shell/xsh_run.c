@@ -1,6 +1,7 @@
 #include <xinu.h>
 #include <shprototypes.h>
 #include <future_prodcons.h>
+#include <future_fib.h>
 #include <future.h>
 #include <stdio.h>
 #include <stdlib.h>  
@@ -50,8 +51,9 @@ shellcmd xsh_run(int nargs, char *args[]) {
 char *val;
 
 void future_prodcons(int nargs, char *args[]) {
-    if(nargs < 3) {
+    if(nargs < 2) {
       fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+      return;
     }
     
     print_sem = semcreate(1);
@@ -63,7 +65,11 @@ void future_prodcons(int nargs, char *args[]) {
     for (int i = 1; i < nargs; i++) {
       if(strcmp(args[i], "-pc") == 0) {
         continue;
-      } else if(strcmp(args[i], "g") == 0) {
+      } else if(strcmp(args[i], "-f") == 0) {
+        continue;
+      } else if(strcmp(args[i], "--free") == 0) {
+        continue;
+      }else if(strcmp(args[i], "g") == 0) {
         continue;
       } else if(strcmp(args[i], "s") == 0) {
         continue;
@@ -87,26 +93,49 @@ void future_prodcons(int nargs, char *args[]) {
       }
     }
 
-    int num_args = nargs - 1;  // keeping number of args to create the array
-    int i = 2; // reseting the index 
-    val = (char *) getmem(num_args); // initializing the array to keep the "s" numbers
+    // check flags
+    if(strcmp(args[1], "-f") == 0) {
+      if(nargs != 3) {
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        return;
+      }
 
-    // Iterate again through the arguments and create the following processes based on the passed argument ("g" or "s VALUE")
-    while (i < nargs)
-    {
-      if (strcmp(args[i], "g") == 0){
-        char id[10];
-        sprintf(id, "fcons%d",i);
-        resume(create(future_cons, 2048, 20, "fcons1", 1, f_exclusive));
+      resume(create(future_fib, 2048, 20, "fFibMain", 2, nargs, args));
+    } else if(strcmp(args[1], "--free") == 0) {
+      if(nargs != 2) {
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        return;
       }
-      if (strcmp(args[i], "s") == 0){
+
+      // just pass trash, not sure why it has params
+      resume(create(future_free_test, 2048, 20, "futFreeTest", 2, 0, NULL));
+    } else if(strcmp(args[1], "-pc") == 0) {
+      if(nargs < 3) {
+        fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f]\n");
+        return;
+      }
+
+      int num_args = nargs - 1;  // keeping number of args to create the array
+      int i = 2; // reseting the index 
+      val = (char *) getmem(num_args); // initializing the array to keep the "s" numbers
+
+      // Iterate again through the arguments and create the following processes based on the passed argument ("g" or "s VALUE")
+      while (i < nargs)
+      {
+        if (strcmp(args[i], "g") == 0){
+          char id[10];
+          sprintf(id, "fcons%d",i);
+          resume(create(future_cons, 2048, 20, "fcons1", 1, f_exclusive));
+        }
+        if (strcmp(args[i], "s") == 0){
+          i++;
+          uint8 number = atoi(args[i]);
+          val[i] = number;
+          resume(create(future_prod, 2048, 20, "fprod1", 2, f_exclusive, &val[i]));
+          sleepms(5);
+        }
         i++;
-        uint8 number = atoi(args[i]);
-        val[i] = number;
-        resume(create(future_prod, 2048, 20, "fprod1", 2, f_exclusive, &val[i]));
-        sleepms(5);
       }
-      i++;
     }
     sleepms(100);
     future_free(f_exclusive);
