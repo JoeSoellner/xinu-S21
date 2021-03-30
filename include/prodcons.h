@@ -1,3 +1,5 @@
+#include <xinu.h>
+
 /*Global variable for producer consumer*/
 extern int n;
 

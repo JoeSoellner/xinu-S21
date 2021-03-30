@@ -1,3 +1,5 @@
+#include <xinu.h>
+
 // declare globally shared array
 extern int arr_q[5];
 
