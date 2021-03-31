@@ -73,7 +73,7 @@ int stream_proc(int nargs, char *args[]) {
 		};
 
 		streams[i] = newStream;
-		resume(create((void *)stream_consumer, 4096, 20, "streamConsumer", 2, &newStream, i));
+		resume(create((void *)stream_consumer, 4096, 20, "streamConsumer", 2, &streams[i], i));
 	}
 
 	// Parse input header file data and populate work queue
@@ -92,23 +92,19 @@ int stream_proc(int nargs, char *args[]) {
 			.value = value,
 		};
 
-		for (int j = 0; j < num_streams; j++) {
-			struct stream currStream = streams[j];
+    wait(streams[streamID].spaces);
+    wait(streams[streamID].mutex);
 
-			wait(currStream.spaces);
-			wait(currStream.mutex);
+    (streams[streamID].queue)[streams[streamID].head] = currDataElement;
+    //struct data_element currItem = (de) (streams[streamID].queue)[streams[streamID].head];
+    //printf("value %d received at time %d\n", currItem.value, currItem.time);
+    
+    //printf("value: %d\n", currItem.value);
+    //printf("time: %d\n", currItem.time);
+    streams[streamID].head = (streams[streamID].head + 1) % work_queue_depth;
 
-			(currStream.queue)[currStream.tail] = currDataElement;
-			//struct data_element currItem = (de) (currStream.queue)[currStream.head];
-			//printf("value %d received at time %d\n", currItem.value, currItem.time);
-			
-			//printf("value: %d\n", currItem.value);
-			//printf("time: %d\n", currItem.time);
-			currStream.tail = (currStream.tail + 1) % work_queue_depth;
-
-			signal(currStream.mutex);
-			signal(currStream.items);
-		}
+    signal(streams[streamID].mutex);
+    signal(streams[streamID].items);
 	}
 
 	for (int i = 0; i < num_streams; i++) {
