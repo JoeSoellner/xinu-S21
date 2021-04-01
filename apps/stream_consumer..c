@@ -21,7 +21,9 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 			break;
 		}
 
-		if(count == output_time) {
+		tscdf_update(tc, currItem.time, currItem.value);
+
+		if(count == output_time - 1) {
 			// might have to define qarray in different namespace
 			int32 *qarray = (int32 *)getmem((6 * sizeof(int32)));
 			qarray = tscdf_quartiles(tc);
@@ -38,13 +40,13 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 			freemem((char *)qarray, (6 * sizeof(int32)));
 
 			count = 0;
-		}
+		} else {
+      count += 1;
+    }
 
-		tscdf_update(tc, currItem.time, currItem.value);
 
 		signal(givenStream->mutex);
 		signal(givenStream->spaces);
-		count += 1;
 	}
 
 	kprintf("stream_consumer exiting\n");
