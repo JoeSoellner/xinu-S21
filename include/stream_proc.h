@@ -15,7 +15,7 @@ struct stream {
 };
 
 // does this need to be a global?
-extern uint pcport;
+extern int32 pcport;
 extern int32 num_streams;
 extern int32 work_queue_depth;
 extern int32 time_window;

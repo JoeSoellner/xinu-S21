@@ -1,7 +1,10 @@
 #include <stream_consumer.h>
+#include <tscdf.h>
 
 void stream_consumer(struct stream *givenStream, int32 streamId) {
 	kprintf("stream_consumer id:%d (pid:%d)\n", streamId, getpid());
+
+	struct tscdf *tc = tscdf_init(time_window);
 
 	int count = 0;
 	while (1) {
@@ -9,7 +12,6 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 		wait(givenStream->mutex);
 
 		// get the item from the queue, remove it, and update tail value
-		// could 
 		struct data_element currItem = (de) (givenStream->queue)[givenStream->tail];
 		//printf("value %d received at time %d, id:%d\n", currItem.value, currItem.time, streamId);
 		// should be updating tail but updating tail seems to make at least all threads run once
@@ -19,7 +21,28 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 			break;
 		}
 
-		kprintf("value %d received at time %d\n", currItem.value, currItem.time);
+		tscdf_update(tc, currItem.time, currItem.value);
+
+		// memory overflow?
+		if(count == output_time) {
+
+			// might have to define qarray in different namespace
+			int32 *qarray = (int32 *)getmem((6 * sizeof(int32)));
+			qarray = tscdf_quartiles(tc);
+
+			if(qarray == NULL) {
+				kprintf("tscdf_quartiles returned NULL\n");
+				continue;
+			}
+
+			char output[64];
+			// id = streamID?
+			sprintf(output, "s%d: %d %d %d %d %d", streamId, qarray[0], qarray[1], qarray[2], qarray[3], qarray[4]);
+			kprintf("%s\n", output);
+			freemem((char *)qarray, (6*sizeof(int32)));
+
+			count = 0;
+		}
 
 		signal(givenStream->mutex);
 		signal(givenStream->spaces);
@@ -27,4 +50,5 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 	}
 
 	kprintf("stream_consumer exiting\n");
+	ptsend(pcport, getpid());
 }

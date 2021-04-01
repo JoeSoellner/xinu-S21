@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <stream_consumer.h>
 #include <string.h>
-#include <tscdf_input.h>
+#include <tscdf.h>
 
-uint pcport;
+int32 pcport;
 int32 num_streams = -1;
 int32 work_queue_depth = -1;
 int32 time_window = -1;
@@ -92,19 +92,19 @@ int stream_proc(int nargs, char *args[]) {
 			.value = value,
 		};
 
-    wait(streams[streamID].spaces);
-    wait(streams[streamID].mutex);
+		wait(streams[streamID].spaces);
+		wait(streams[streamID].mutex);
 
-    (streams[streamID].queue)[streams[streamID].head] = currDataElement;
-    //struct data_element currItem = (de) (streams[streamID].queue)[streams[streamID].head];
-    //printf("value %d received at time %d\n", currItem.value, currItem.time);
-    
-    //printf("value: %d\n", currItem.value);
-    //printf("time: %d\n", currItem.time);
-    streams[streamID].head = (streams[streamID].head + 1) % work_queue_depth;
+		(streams[streamID].queue)[streams[streamID].head] = currDataElement;
+		//struct data_element currItem = (de) (streams[streamID].queue)[streams[streamID].head];
+		//printf("value %d received at time %d\n", currItem.value, currItem.time);
 
-    signal(streams[streamID].mutex);
-    signal(streams[streamID].items);
+		//printf("value: %d\n", currItem.value);
+		//printf("time: %d\n", currItem.time);
+		streams[streamID].head = (streams[streamID].head + 1) % work_queue_depth;
+
+		signal(streams[streamID].mutex);
+		signal(streams[streamID].items);
 	}
 
 	for (int i = 0; i < num_streams; i++) {
