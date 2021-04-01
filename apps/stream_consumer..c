@@ -23,9 +23,7 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 
 		tscdf_update(tc, currItem.time, currItem.value);
 
-		// memory overflow?
-		if(count == output_time) {
-
+		if(count + 1 == output_time) {
 			// might have to define qarray in different namespace
 			int32 *qarray = (int32 *)getmem((6 * sizeof(int32)));
 			qarray = tscdf_quartiles(tc);
@@ -39,7 +37,7 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 			// id = streamID?
 			sprintf(output, "s%d: %d %d %d %d %d", streamId, qarray[0], qarray[1], qarray[2], qarray[3], qarray[4]);
 			kprintf("%s\n", output);
-			freemem((char *)qarray, (6*sizeof(int32)));
+			freemem((char *)qarray, (6 * sizeof(int32)));
 
 			count = 0;
 		}
