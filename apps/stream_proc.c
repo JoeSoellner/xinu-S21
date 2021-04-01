@@ -17,7 +17,6 @@ int stream_proc(int nargs, char *args[]) {
 	char usage[] = "run tscdf -s num_streams -w work_queue_depth -t time_window "
 				   "-o output_time\n";
 
-	// printf("nargs %d\n", nargs);
 	if (nargs != 9) {
 		printf("%s", usage);
 		return (-1);
@@ -96,11 +95,6 @@ int stream_proc(int nargs, char *args[]) {
 		wait(streams[streamID].mutex);
 
 		(streams[streamID].queue)[streams[streamID].head] = currDataElement;
-		//struct data_element currItem = (de) (streams[streamID].queue)[streams[streamID].head];
-		//printf("value %d received at time %d\n", currItem.value, currItem.time);
-
-		//printf("value: %d\n", currItem.value);
-		//printf("time: %d\n", currItem.time);
 		streams[streamID].head = (streams[streamID].head + 1) % work_queue_depth;
 
 		signal(streams[streamID].mutex);

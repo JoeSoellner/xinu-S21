@@ -13,8 +13,6 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 
 		// get the item from the queue, remove it, and update tail value
 		struct data_element currItem = (de) (givenStream->queue)[givenStream->tail];
-		//printf("value %d received at time %d, id:%d\n", currItem.value, currItem.time, streamId);
-		// should be updating tail but updating tail seems to make at least all threads run once
 		givenStream->tail = (givenStream->tail + 1) % work_queue_depth;
 
 		if (currItem.time == 0 && currItem.value == 0) {
@@ -41,9 +39,8 @@ void stream_consumer(struct stream *givenStream, int32 streamId) {
 
 			count = 0;
 		} else {
-      count += 1;
-    }
-
+      		count += 1;
+    	}
 
 		signal(givenStream->mutex);
 		signal(givenStream->spaces);
