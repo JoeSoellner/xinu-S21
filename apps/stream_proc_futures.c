@@ -71,23 +71,8 @@ int stream_proc_futures(int nargs, char* args[]) {
 
 		currDataElement.time = timestamp;
 		currDataElement.value = value;
-		
-		//  = {
-
-		// 	.time = timestamp,
-		// 	.value = value,
-		// };
-
-		// future_t *currFuture = futures[streamID];
-		// if (streamID == 1)
-		// printf("t1 %d v %d\n", currDataElement.time, currDataElement.value);
 
 		future_set(futures[streamID], (char *) &currDataElement);
-
-
-		// struct data_element currDataElement2;
-		// future_get(futures[streamID], (char *) &currDataElement2);
-		// printf("t2 %d v %d\n", currDataElement2.time, currDataElement2.value);
 	}
 
 	// Wait for all consumers to exit
@@ -113,29 +98,24 @@ int stream_proc_futures(int nargs, char* args[]) {
 
 void stream_consumer_future(int32 id, future_t *f) {
 	kprintf("stream_consumer id:%d (pid:%d)\n", id, getpid());
+
 	struct tscdf *tc = tscdf_init(time_window);
 	struct data_element data_element;
-	int count = 0;
+
 	int32 *qarray;
-
 	char output[64];
+	int count = 0;
+	
 	while (1) {
-		// char *charPtr;
-
 		future_get(f, (char  *) &data_element);
-		// if (id == 1)
-		// 	printf("g: t %d v %d\n", data_element.time, data_element.value);
-		// struct data_element *currItem = (de *) charPtr;
 
 		if (data_element.time == 0 && data_element.value == 0) {
 			break;
 		}
 
-		//kprintf("time: %d, value: %d\n", currItem->time, currItem->value);
 		tscdf_update(tc, data_element.time, data_element.value);
 
 		if(count == output_time - 1) {
-			//  = (int32 *)getmem((6 * sizeof(int32)));
 			qarray = tscdf_quartiles(tc);
 
 			if(qarray == NULL) {
@@ -143,7 +123,6 @@ void stream_consumer_future(int32 id, future_t *f) {
 				continue;
 			}
 
-			
 			sprintf(output, "s%d: %d %d %d %d %d", id, qarray[0], qarray[1], qarray[2], qarray[3], qarray[4]);
 			kprintf("%s\n", output);
 			freemem(qarray, (6 * sizeof(int32)));
@@ -154,9 +133,8 @@ void stream_consumer_future(int32 id, future_t *f) {
     	}
 	}
 
-	// Free tscdf time window
-	// freemem((char *) tc, sizeof(struct tscdf));
 	tscdf_free(tc);
+
 	// Signal producer and exit
 	kprintf("stream_consumer exiting\n");
 	ptsend(pcport, getpid());

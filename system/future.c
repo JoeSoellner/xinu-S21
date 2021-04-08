@@ -138,7 +138,7 @@ syscall future_get(future_t* f, char* out) {
 
     char* headelemptr = f->data + (f->head * f->size);
     memcpy(out, headelemptr, f->size);
-    f->head = f->head + 1 % f->max_elems;
+    f->head = (f->head + 1) % f->max_elems;
     f->count -= 1;
 
     // now that there is room, resume a setter if one is waiting
@@ -218,7 +218,7 @@ syscall future_set(future_t* f, char* in) {
 
     char* tailelemptr = f->data + (f->tail * f->size);
     memcpy(tailelemptr, in, sizeof(de));
-    f->tail = f->tail + 1 % f->max_elems;
+    f->tail = (f->tail + 1) % f->max_elems;
     f->count += 1;
 
     // now that there is a item to get, resume a getter if one is waiting
