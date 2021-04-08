@@ -9,13 +9,13 @@ uint future_prod(future_t *fut, char *value)
 {
   int status;
   wait(print_sem);
-  printf("Producing %d\n", *value);
+  kprintf("Producing %d\n", *value);
   signal(print_sem);
   status = (int)future_set(fut, value);
   if (status < 1)
   {
     wait(print_sem);
-    printf("future_set failed\n");
+    kprintf("future_set failed\n");
     signal(print_sem);
     return -1;
   }
@@ -31,12 +31,12 @@ uint future_cons(future_t *fut)
   if (status < 1)
   {
     wait(print_sem);
-    printf("future_get failed\n");
+    kprintf("future_get failed\n");
     signal(print_sem);
     return -1;
   }
   wait(print_sem);
-  printf("Consumed %d\n", *i);
+  kprintf("Consumed %d\n", *i);
   signal(print_sem);
   return OK;
 }

@@ -1,3 +1,5 @@
+#include <future.h>
+
 extern future_t** fibfut;
 
 int future_fib(int nargs, char *args[]);

@@ -1,10 +1,9 @@
-#include <future.h>
 #include <future_fib.h>
 #include <future_prodcons.h>
 #include <shprototypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stream_proc.h>
+#include <stream_proc_futures.h>
 #include <string.h>
 #include <xinu.h>
 
@@ -44,10 +43,15 @@ shellcmd xsh_run(int nargs, char *args[]) {
 		/* create a process with the function as an entry point. */
 		resume(create((void *)future_prodcons, 4096, 20, "futest", 2, nargs, args));
 		return 1;
+	} else if (strncmp(args[0], "tscdf_fq", 9) == 0) {
+		/* create a process with the function as an entry point. */
+		resume(create((void *)stream_proc_futures, 4096, 20, "tscdf_fq", 2, nargs, args));
+		return 1;
 	} else if (strncmp(args[0], "tscdf", 7) == 0) {
 		/* create a process with the function as an entry point. */
 		resume(create((void *)stream_proc, 4096, 20, "tscdf", 2, nargs, args));
 		return 1;
+		
 	} else {
 		printPrograms();
 		return 1;
@@ -65,7 +69,11 @@ void future_prodcons(int nargs, char *args[]) {
 
 	print_sem = semcreate(1);
 	future_t *f_exclusive;
-	f_exclusive = future_alloc(FUTURE_EXCLUSIVE, sizeof(int), 1);
+	if(strcmp(args[1], "-pcq") == 0) {
+		f_exclusive = future_alloc(FUTURE_QUEUE, sizeof(int), atoi(args[2]));
+	} else {
+		f_exclusive = future_alloc(FUTURE_EXCLUSIVE, sizeof(int), 1);
+	}
 
 	// First, try to iterate through the arguments and make sure they are all
 	// valid based on the requirements (you may assume the argument after "s"
@@ -74,6 +82,8 @@ void future_prodcons(int nargs, char *args[]) {
 		// think i tried to do this in a more elegant way but was a pain
 		// its ugly but it works
 		if (strcmp(args[i], "-pc") == 0) {
+			continue;
+		} else if (strcmp(args[i], "-pcq") == 0) {
 			continue;
 		} else if (strcmp(args[i], "-f") == 0) {
 			continue;
@@ -122,11 +132,17 @@ void future_prodcons(int nargs, char *args[]) {
 
 		// just pass trash, not sure why it has params
 		resume(create(future_free_test, 2048, 20, "futFreeTest", 2, 0, NULL));
-	} else if (strcmp(args[1], "-pc") == 0) {
+	} else if (strcmp(args[1], "-pc") == 0 || strcmp(args[1], "-pcq") == 0) {
 		if (nargs < 3) {
-			fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f "
-							"NUMBER][--free]\n");
-			return;
+			if (strcmp(args[1], "-pc") == 0) {
+				kprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f "
+					"NUMBER][--free]\n");
+				return;
+			} else if (strcmp(args[1], "-pcq") == 0) {
+				kprintf(stderr, "run futest [-pc [g ...] [s VALUE ...]] | [-pcq LEN"
+					"GTH [g ...] [s VALUE ...]] | [-f NUMBER] | [--free]\n");
+				return;
+			}
 		}
 
 		int num_args = nargs - 1;		// keeping number of args to create the array

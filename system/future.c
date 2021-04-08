@@ -1,23 +1,30 @@
 #include <future.h>
 #include <stddef.h>
+#include <stream_proc.h>
 
 future_t* future_alloc(future_mode_t mode, uint size, uint nelem)
 {
   intmask mask;
   mask = disable();
 
-  // init block of memory of size 'size' for data attribute of future
-  char* tempData = getmem(size);
-
-  struct future_t *futurePtr = getmem(sizeof(future_t));
-  futurePtr->data = tempData;
+  struct future_t *futurePtr = (struct future_t*) getmem(sizeof(future_t));
   futurePtr->size = size;
   futurePtr->state = FUTURE_EMPTY;
   futurePtr->mode = mode;
   futurePtr->pid = -1;
+  // init block of memory of size 'size' for data attribute of future
+  // data attribute is used as a queue in queue mode so is of size * numOfElements
+  futurePtr->data = mode == FUTURE_QUEUE ? getmem(size * nelem) : getmem(size);
 
   if(mode == FUTURE_SHARED) {
     futurePtr->get_queue = newqueue();
+  } else if (mode == FUTURE_QUEUE) {
+    futurePtr->get_queue = newqueue();
+    futurePtr->set_queue = newqueue();
+    futurePtr->max_elems = nelem;
+    futurePtr->count = 0;
+    futurePtr->head = 0;
+    futurePtr->tail = 0;
   }
 
   restore(mask);
@@ -29,7 +36,10 @@ syscall future_free(future_t* f) {
   mask = disable();
   syscall killResult = OK;
 
-  syscall freeMemResult = freemem(f->data, f->size);
+  // have to free more memory in queue mode as data a queue of elements
+  // instead of a single element
+  syscall freeMemResult = f->mode == FUTURE_QUEUE ? freemem(f->data, f->size * f->max_elems) : freemem(f->data, f->size);
+
   if(f->pid != -1) {
     killResult = kill(f->pid);
   }
@@ -38,11 +48,17 @@ syscall future_free(future_t* f) {
     while(nonempty(f->get_queue)) {
       kill(dequeue(f->get_queue));
     }
-    //idk if this is how to free queue
-    //delqueue(f->get_queue);
+  } else if (f->mode == FUTURE_QUEUE) {
+    while(nonempty(f->get_queue)) {
+      kill(dequeue(f->get_queue));
+    }
+
+    while(nonempty(f->set_queue)) {
+      kill(dequeue(f->set_queue));
+    }
   }
 
-  syscall freeFuturePtrResult = freemem(f, sizeof(future_t));
+  syscall freeFuturePtrResult = freemem((char *) f, sizeof(future_t));
 
   restore(mask);
   if(freeMemResult == SYSERR || killResult == SYSERR || freeFuturePtrResult == SYSERR) {
@@ -52,7 +68,7 @@ syscall future_free(future_t* f) {
   }
 }
 
-syscall future_get(future_t* f,  char* out) {
+syscall future_get(future_t* f, char* out) {
   intmask mask;
   mask = disable();
 
@@ -112,6 +128,26 @@ syscall future_get(future_t* f,  char* out) {
     }
 
     return SYSERR;
+  } else if (f->mode == FUTURE_QUEUE) {
+    // no items to get, so go in waiting queue
+    // when future wakes up get an element from the head of the queue
+    if(f->count == 0) {
+      enqueue(getpid(), f->get_queue);
+      suspend(getpid());
+    }
+
+    char* headelemptr = f->data + (f->head * f->size);
+    memcpy(out, headelemptr, f->size);
+    f->head = f->head + 1 % f->max_elems;
+    f->count -= 1;
+
+    // now that there is room, resume a setter if one is waiting
+    if(nonempty(f->set_queue)) {
+      resume(dequeue(f->set_queue));
+    }
+
+    restore(mask);
+    return OK;
   }
   return SYSERR;
 }
@@ -172,6 +208,26 @@ syscall future_set(future_t* f, char* in) {
       return SYSERR;
     }
     return SYSERR;
+  } else if (f->mode == FUTURE_QUEUE) {
+    // queue is full, so wait until there is space
+    // when future wakes up put the element in the tail of the queue
+    if(f->count == f->max_elems) {
+      enqueue(getpid(), f->set_queue);
+      suspend(getpid());
+    }
+
+    char* tailelemptr = f->data + (f->tail * f->size);
+    memcpy(tailelemptr, in, sizeof(de));
+    f->tail = f->tail + 1 % f->max_elems;
+    f->count += 1;
+
+    // now that there is a item to get, resume a getter if one is waiting
+    if(nonempty(f->get_queue)) {
+      resume(dequeue(f->get_queue));
+    }
+
+    restore(mask);
+    return OK;
   }
   return SYSERR;
 }
