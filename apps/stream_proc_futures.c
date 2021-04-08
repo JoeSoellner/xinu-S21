@@ -97,7 +97,7 @@ int stream_proc_futures(int nargs, char* args[]) {
 }
 
 void stream_consumer_future(int32 id, future_t *f) {
-	kprintf("stream_consumer id:%d (pid:%d)\n", id, getpid());
+	kprintf("stream_consumer_future id:%d (pid:%d)\n", id, getpid());
 
 	struct tscdf *tc = tscdf_init(time_window);
 	struct data_element data_element;
@@ -136,7 +136,7 @@ void stream_consumer_future(int32 id, future_t *f) {
 	tscdf_free(tc);
 
 	// Signal producer and exit
-	kprintf("stream_consumer exiting\n");
+	kprintf("stream_consumer_future exiting\n");
 	ptsend(pcport, getpid());
 
 	return;
