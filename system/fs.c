@@ -4,9 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// what is this device stuff? just use dev0 for everything?
 // what are these inode helper functions doing exactly
-
 
 #ifdef FS
 #include <fs.h>

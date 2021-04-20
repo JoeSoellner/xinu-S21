@@ -141,7 +141,6 @@ int fstest_mkdev() {
     ASSERT_PASS(bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS))
     ASSERT_PASS(fs_mkfs(0, DEFAULT_NUM_INODES))
     ASSERT_PASS(fs_create("test", O_CREAT))
-
     ASSERT_PASS(fs_freefs(0))
     ASSERT_PASS(bs_freedev(0))
   }

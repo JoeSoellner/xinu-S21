@@ -8,6 +8,8 @@
 #include <xinu.h>
 #include <fs.h>
 
+int fstest(int, char *);
+
 void printPrograms() {
 	printf("hello\n");
 	printf("list\n");
@@ -59,11 +61,11 @@ shellcmd xsh_run(int nargs, char *args[]) {
 		return 1;
 	} else if (strncmp(args[0], "fsopen", 6) == 0) {
 		/* create a process with the function as an entry point. */
-		resume(create((void *)fs_open, 4096, 20, "fsopen", 2, "test", O_CREAT));
+		resume(create((void *)fs_open, 4096, 20, "fsopen", 2, "test", 11));
 		return 1;
 	} else if (strncmp(args[0], "fscreate", 8) == 0) {
 		/* create a process with the function as an entry point. */
-		resume(create((void *)fs_create, 4096, 20, "fscreate", 2, "test", O_CREAT));
+		resume(create((void *)fs_create, 4096, 20, "fscreate", 2, "test", 11));
 		return 1;
 	} else {
 		printPrograms();
@@ -148,11 +150,11 @@ void future_prodcons(int nargs, char *args[]) {
 	} else if (strcmp(args[1], "-pc") == 0 || strcmp(args[1], "-pcq") == 0) {
 		if (nargs < 3) {
 			if (strcmp(args[1], "-pc") == 0) {
-				kprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f "
+				fprintf(stderr, "Syntax: run futest [-pc [g ...] [s VALUE ...]|-f "
 					"NUMBER][--free]\n");
 				return;
 			} else if (strcmp(args[1], "-pcq") == 0) {
-				kprintf(stderr, "run futest [-pc [g ...] [s VALUE ...]] | [-pcq LEN"
+				fprintf(stderr, "run futest [-pc [g ...] [s VALUE ...]] | [-pcq LEN"
 					"GTH [g ...] [s VALUE ...]] | [-f NUMBER] | [--free]\n");
 				return;
 			}

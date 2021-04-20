@@ -349,6 +349,4 @@ void fs_print_fsd(void);
  */
 void fs_print_dir(void);
 
-int fstest(int nargs, char *args[]);
-
 #endif /* FS_H */
