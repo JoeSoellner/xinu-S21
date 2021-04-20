@@ -6,6 +6,7 @@
 #include <stream_proc_futures.h>
 #include <string.h>
 #include <xinu.h>
+#include <fs.h>
 
 void printPrograms() {
 	printf("hello\n");
@@ -14,6 +15,7 @@ void printPrograms() {
 	printf("prodcons\n");
 	printf("futest\n");
 	printf("tscdf\n");
+	printf("fstest\n");
 }
 
 shellcmd xsh_run(int nargs, char *args[]) {
@@ -51,7 +53,18 @@ shellcmd xsh_run(int nargs, char *args[]) {
 		/* create a process with the function as an entry point. */
 		resume(create((void *)stream_proc, 4096, 20, "tscdf", 2, nargs, args));
 		return 1;
-		
+	} else if (strncmp(args[0], "fstest", 6) == 0) {
+		/* create a process with the function as an entry point. */
+		resume(create((void *)fstest, 4096, 20, "fstest", 2, nargs, args));
+		return 1;
+	} else if (strncmp(args[0], "fsopen", 6) == 0) {
+		/* create a process with the function as an entry point. */
+		resume(create((void *)fs_open, 4096, 20, "fsopen", 2, "test", O_CREAT));
+		return 1;
+	} else if (strncmp(args[0], "fscreate", 8) == 0) {
+		/* create a process with the function as an entry point. */
+		resume(create((void *)fs_create, 4096, 20, "fscreate", 2, "test", O_CREAT));
+		return 1;
 	} else {
 		printPrograms();
 		return 1;
