@@ -5,6 +5,7 @@
 #include <string.h>
 
 // what are these inode helper functions doing exactly
+// if a file is in the oft does that mean that it is open?
 
 //#ifdef FS
 #include <fs.h>
@@ -383,7 +384,7 @@ int fs_close(int fd) {
 		return SYSERR;
 	}
 
-	fileToClose.state == FSTATE_CLOSED;
+	fileToClose.state = FSTATE_CLOSED;
   	return OK;
 }
 
