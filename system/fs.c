@@ -377,10 +377,14 @@ int fs_open(char *filename, int flags) {
 }
 
 int fs_close(int fd) {
+	filetable_t fileToClose = oft[fd];
 
+	if(fileToClose.state == FSTATE_CLOSED) {
+		return SYSERR;
+	}
 
-
-  	return SYSERR;
+	fileToClose.state == FSTATE_CLOSED;
+  	return OK;
 }
 
 int fs_create(char *filename, int mode) {
