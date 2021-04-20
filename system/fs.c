@@ -343,10 +343,10 @@ int fs_open(char *filename, int flags) {
 			// file is in open file table with the same name
 			if(strncmp(&(currOpenFile.de->name[0]), filename, FILENAMELEN) == 0) {
 				// if the file is in the oft and close then just open it and exit function
-				//if(currOpenFile.state == FSTATE_CLOSED) {
-				//	currOpenFile.state = FSTATE_OPEN;
-				//	return j;
-				//}
+				if(currOpenFile.state == FSTATE_CLOSED) {
+					oft[j].state = FSTATE_OPEN;
+					return j;
+				}
 
 				//kprintf("file is already open\n");
 				// otherwise file is open and return error
