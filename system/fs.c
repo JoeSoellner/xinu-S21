@@ -7,7 +7,7 @@
 // what are these inode helper functions doing exactly
 // if a file is in the oft does that mean that it is open?
 
-//#ifdef FS
+#ifdef FS
 #include <fs.h>
 
 static fsystem_t fsd;
@@ -314,13 +314,16 @@ void fs_printfreemask(void) { // print block bitmask
 }
 
 int fs_open(char *filename, int flags) {
+	//bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS);
+	//fs_mkfs(0, DEFAULT_NUM_INODES);
+
 	// find entry matching the give filename
 	for(int i = 0; i < DIRECTORY_SIZE; i++) {
 		dirent_t currEntry = fsd.root_dir.entry[i];
 
-		//kprintf("currEntryName: %s, filename: %s \n", &(currEntry.name[0]), filename);
+		// kprintf("currEntryName: %s, filename: %s \n", &(currEntry.name[0]), filename);
 		// if the filename doesnt match go onto the next file
-		if(strncmp(&(currEntry.name[0]), filename, FILENAMELEN) == 0) {
+		if(strncmp(&(currEntry.name[0]), filename, FILENAMELEN) != 0) {
 			continue;
 		}
 
@@ -332,15 +335,21 @@ int fs_open(char *filename, int flags) {
 			filetable_t currOpenFile = oft[j];
 
 			// assuming that all open files are at beginning and all empty spaces are at the end
-			if(currOpenFile.de == NULL) {
+			// remember the index of the first open spot
+			if(currOpenFile.de == NULL && firstSpaceForOpenFile == -1) {
 				firstSpaceForOpenFile = j;
-				break;
 			}
 
-			// file is already open
+			// file is in open file table with the same name
 			if(strncmp(&(currOpenFile.de->name[0]), filename, FILENAMELEN) == 0) {
-				// the state of the file could be closed and then may have to open it up????
+				// if the file is in the oft and close then just open it and exit function
+				if(currOpenFile.state == FSTATE_CLOSED) {
+					currOpenFile.state = FSTATE_OPEN;
+					return j;
+				}
+
 				//kprintf("file is already open\n");
+				// otherwise file is open and return error
 				return SYSERR;
 			}
 		}
@@ -365,6 +374,8 @@ int fs_open(char *filename, int flags) {
 		openFileDirectoryEntryPtr->inode_num = currEntry.inode_num;
 		strcpy(&(openFileDirectoryEntryPtr->name[0]), filename);
 
+		oft[firstSpaceForOpenFile].state = FSTATE_OPEN;
+		oft[firstSpaceForOpenFile].fileptr = 0;
 		oft[firstSpaceForOpenFile].de = openFileDirectoryEntryPtr;
 		oft[firstSpaceForOpenFile].in = newInode;
 		oft[firstSpaceForOpenFile].flag = flags;
@@ -439,6 +450,7 @@ int fs_create(char *filename, int mode) {
 	//kprintf("firstSpaceForOpenEntry: %d\n", firstSpaceForOpenEntry);
 	fsd.root_dir.numentries += 1;
 	fsd.root_dir.entry[firstSpaceForOpenEntry] = *openFileDirectoryEntryPtr;
+	//kprintf("firstSpaceForOpenEntry: %d, entryName: %s \n", firstSpaceForOpenEntry, fsd.root_dir.entry[firstSpaceForOpenEntry].name);
 
 	// what do i use for the flags??????
 	int openResult = fs_open(filename, O_RDWR);
@@ -469,4 +481,4 @@ int fs_unlink(char *filename) {
   	return SYSERR;
 }
 
-//#endif /* FS */
+#endif /* FS */
