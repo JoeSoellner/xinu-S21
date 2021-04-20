@@ -6,7 +6,7 @@
 
 // what are these inode helper functions doing exactly
 
-#ifdef FS
+//#ifdef FS
 #include <fs.h>
 
 static fsystem_t fsd;
@@ -313,65 +313,63 @@ void fs_printfreemask(void) { // print block bitmask
 }
 
 int fs_open(char *filename, int flags) {
-	int firstSpaceForOpenFile = -1;
-  	int numEntries = fsd.root_dir.numentries;
-
 	// find entry matching the give filename
 	for(int i = 0; i < DIRECTORY_SIZE; i++) {
 		dirent_t currEntry = fsd.root_dir.entry[i];
 
-		// comparing a char array and a char pointer
-		// idk how the tell the length of these strings
-		// if the right file is found
 		//kprintf("currEntryName: %s, filename: %s \n", &(currEntry.name[0]), filename);
+		// if the filename doesnt match go onto the next file
 		if(strncmp(&(currEntry.name[0]), filename, FILENAMELEN) == 0) {
-			//kprintf("filename match\n");
-			int firstSpaceForOpenFile = -1;
-			// check if the file is already open
-			for(int j = 0; j < NUM_FD; j++) {
-				filetable_t currOpenFile = oft[j];
+			continue;
+		}
 
-				// assuming that all open files are at beginning and all empty spaces are at the end
-				if(currOpenFile.de == NULL) {
-					firstSpaceForOpenFile = j;
-					break;
-				}
+		// otherwise the filename does match
+		//kprintf("filename match\n");
+		int firstSpaceForOpenFile = -1;
+		// check if the file is already open
+		for(int j = 0; j < NUM_FD; j++) {
+			filetable_t currOpenFile = oft[j];
 
-				// file is already open
-				if(strncmp(&(currOpenFile.de->name[0]), filename, FILENAMELEN) == 0) {
-					// the state of the file could be closed and then may have to open it up????
-					//kprintf("file is already open\n");
-					return SYSERR;
-				}
+			// assuming that all open files are at beginning and all empty spaces are at the end
+			if(currOpenFile.de == NULL) {
+				firstSpaceForOpenFile = j;
+				break;
 			}
 
-			// no spaces for open file
-			if(firstSpaceForOpenFile == -1) {
-				//kprintf("no space for the file in open file table\n");
+			// file is already open
+			if(strncmp(&(currOpenFile.de->name[0]), filename, FILENAMELEN) == 0) {
+				// the state of the file could be closed and then may have to open it up????
+				//kprintf("file is already open\n");
 				return SYSERR;
 			}
-
-			// create structs to put in open file table
-			struct inode newInode;
-			newInode.id     = EMPTY;
-			newInode.type   = 0;
-			newInode.nlink  = 0;
-			newInode.device = 0;
-			newInode.size   = 0;
-			memset(newInode.blocks, 0, INODEBLOCKS);
-			_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
-
-			struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
-			openFileDirectoryEntryPtr->inode_num = currEntry.inode_num;
-			strcpy(&(openFileDirectoryEntryPtr->name[0]), filename);
-
-			oft[firstSpaceForOpenFile].de = openFileDirectoryEntryPtr;
-			oft[firstSpaceForOpenFile].in = newInode;
-			oft[firstSpaceForOpenFile].flag = flags;
-
-			// idk if im returning the right thing
-			return firstSpaceForOpenFile;
 		}
+
+		// no spaces for open file
+		if(firstSpaceForOpenFile == -1) {
+			//kprintf("no space for the file in open file table\n");
+			return SYSERR;
+		}
+
+		// create structs to put in open file table
+		struct inode newInode;
+		newInode.id     = EMPTY;
+		newInode.type   = 0;
+		newInode.nlink  = 0;
+		newInode.device = 0;
+		newInode.size   = 0;
+		memset(newInode.blocks, 0, INODEBLOCKS);
+		_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
+
+		struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
+		openFileDirectoryEntryPtr->inode_num = currEntry.inode_num;
+		strcpy(&(openFileDirectoryEntryPtr->name[0]), filename);
+
+		oft[firstSpaceForOpenFile].de = openFileDirectoryEntryPtr;
+		oft[firstSpaceForOpenFile].in = newInode;
+		oft[firstSpaceForOpenFile].flag = flags;
+
+		// idk if im returning the right thing
+		return firstSpaceForOpenFile;
 	}
 
 	//kprintf("file not found\n");
@@ -379,6 +377,9 @@ int fs_open(char *filename, int flags) {
 }
 
 int fs_close(int fd) {
+
+
+
   	return SYSERR;
 }
 
@@ -387,8 +388,6 @@ int fs_create(char *filename, int mode) {
 	//kprintf("fs_mkfs: %d \n", fs_mkfs(0, DEFAULT_NUM_INODES));
 	//bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS);
 	//fs_mkfs(0, DEFAULT_NUM_INODES);
-
-	int numEntries = fsd.root_dir.numentries;
 	int firstSpaceForOpenEntry = -1;
 
 	// iterate over all the files in the root directory
@@ -444,65 +443,7 @@ int fs_create(char *filename, int mode) {
 }
 
 int fs_seek(int fd, int offset) {
-	/*
-  	int numEntries = fsd.root_dir.numentries;
-	kprintf("numEntries: %d\n", numEntries);
 
-	// find entry matching the give filename
-	for(int i = 0; i < numEntries; i++) {
-		dirent_t currEntry = fsd.root_dir.entry[i];
-
-		// comparing a char array and a char pointer
-		// idk how the tell the length of these strings
-		// if the right file is found
-		if(strncmp(&(currEntry.name[0]), filename, FILENAMELEN) == 0) {
-
-			int firstSpaceForOpenFile = -1;
-			// check if the file is already open
-			for(int j = 0; j < NUM_FD; j++) {
-				filetable_t currOpenFile = oft[j];
-
-				// assuming that all open files are at beginning and all empty spaces are at the end
-				if(currOpenFile.de == NULL) {
-					firstSpaceForOpenFile = j;
-					break;
-				}
-
-				// file is already open
-				if(strncmp(&(currOpenFile.de->name[0]), filename, FILENAMELEN) == 0) {
-					// the state of the file could be closed and then may have to open it up????
-					return SYSERR;
-				}
-			}
-
-			// no spaces for open file
-			if(firstSpaceForOpenFile == -1) {
-				return SYSERR;
-			}
-
-			// create structs to put in open file table
-			struct inode newInode;
-			newInode.id     = EMPTY;
-			newInode.type   = 0;
-			newInode.nlink  = 0;
-			newInode.device = 0;
-			newInode.size   = 0;
-			memset(newInode.blocks, 0, INODEBLOCKS);
-			_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
-
-			struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
-			openFileDirectoryEntryPtr->inode_num = currEntry.inode_num;
-			strcpy(&(openFileDirectoryEntryPtr->name[0]), filename);
-
-			oft[firstSpaceForOpenFile].de = openFileDirectoryEntryPtr;
-			oft[firstSpaceForOpenFile].in = newInode;
-			oft[firstSpaceForOpenFile].flag = flags;
-
-			// idk if im returning the right thing
-			return firstSpaceForOpenFile;
-		}
-	}
-	*/
   	return SYSERR;
 	
 }
@@ -523,4 +464,4 @@ int fs_unlink(char *filename) {
   	return SYSERR;
 }
 
-#endif /* FS */
+//#endif /* FS */
