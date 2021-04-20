@@ -395,7 +395,7 @@ int fs_close(int fd) {
 		return SYSERR;
 	}
 
-	fileToClose.state = FSTATE_CLOSED;
+	oft[fd].state = FSTATE_CLOSED;
   	return OK;
 }
 

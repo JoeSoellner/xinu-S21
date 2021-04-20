@@ -143,7 +143,13 @@ int fstest_mkdev() {
 
     int createResult = fs_create("test", O_CREAT);
     ASSERT_PASS(createResult)
-    //ASSERT_PASS(fs_close(createResult))
+    ASSERT_PASS(fs_close(createResult))
+    //fs_print_dir();
+
+    //fs_print_fsd();
+
+    fs_print_oft();
+    ASSERT_FAIL(fs_close(createResult))
 
     ASSERT_PASS(fs_freefs(0))
     ASSERT_PASS(bs_freedev(0))
@@ -177,7 +183,7 @@ int fstest(int nargs, char *args[]) {
 #ifdef FS
 
   printf("\n\n\n");
-  TEST(fstest_testbitmask)
+  //TEST(fstest_testbitmask)
   TEST(fstest_mkdev)
 
 #else
