@@ -494,9 +494,10 @@ int fs_link(char *src_filename, char* dst_filename) {
 			firstSpaceForOpenEntry = i;
 		}
 
-		// if we have found both the values we are looking for then stop searching
-		if(inodeNum != -1 && firstSpaceForOpenEntry != -1) {
-			break;
+		// if there is a fill with the name we are trying to use then error
+		if(strncmp(&(currEntry.name[0]), dst_filename, FILENAMELEN) == 0) {
+			//kprintf("ERROR: Already a file with that name, no duplicate filenames \n");
+			return SYSERR;
 		}
 	}
 
