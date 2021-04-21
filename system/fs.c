@@ -482,7 +482,7 @@ int fs_link(char *src_filename, char* dst_filename) {
 	for(int i = 0; i < DIRECTORY_SIZE; i++) {
 		dirent_t currEntry = fsd.root_dir.entry[i];
 
-		// if the file name match then record the index and break
+		// if the file name matches then record the index and break
 		// there shouldn't be duplicate names so don't need to check if inodeNum has be assigned yet
 		if(strncmp(&(currEntry.name[0]), src_filename, FILENAMELEN) == 0) {
 			inodeNum = i;
@@ -502,11 +502,11 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 	// there is no file with the name we are searching for
 	if(inodeNum == -1) {
-		kprintf("ERROR: A file does not exist with that name \n");
+		//kprintf("ERROR: A file does not exist with that name \n");
 		return SYSERR;
 	}
 	if(firstSpaceForOpenEntry == -1) {
-		kprintf("ERROR: No space for new entry \n");
+		//kprintf("ERROR: No space for new entry \n");
 		return SYSERR;
 	}
 
@@ -529,7 +529,60 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 
 int fs_unlink(char *filename) {
-  	return SYSERR;
+	int filenameIndex = -1;
+
+	// iterate over all the files in the root directory
+	for(int i = 0; i < DIRECTORY_SIZE; i++) {
+		dirent_t currEntry = fsd.root_dir.entry[i];
+
+		// if the file name matches then record the index and break
+		// there shouldn't be duplicate names so don't need to check if inodeNum has be assigned yet
+		if(strncmp(&(currEntry.name[0]), filename, FILENAMELEN) == 0) {
+			filenameIndex = i;
+			break;
+		}
+	}
+
+	// there is no file with the name we are searching for
+	if(filenameIndex == -1) {
+		//kprintf("ERROR: A file does not exist with that name \n");
+		return SYSERR;
+	}
+
+	int inodeNum = fsd.root_dir.entry[filenameIndex].inode_num;
+
+	struct inode *inodePtr = (struct inode*) getmem(sizeof(inode_t));
+	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
+
+	if (inodePtr->nlink < 1) {
+		kprintf("ERROR: Inode has no links to it??? \n");
+		return SYSERR;
+	}
+
+	if (inodePtr->nlink == 1) {
+		// If the nlinks of the inode is just 1, then delete the respective inode along with its data blocks as well
+
+		// turn the inode's blocks to all zeros
+		memset(inodePtr->blocks, 0, INODEBLOCKS);
+
+		// write over old inode with blank one
+		struct inode blankInode;
+		blankInode.id = EMPTY;
+		_fs_put_inode_by_num(dev0, inodeNum, &blankInode);
+
+		fsd.inodes_used -= 1;
+	}
+
+	struct dirent *blankEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
+	blankEntryPtr->inode_num = EMPTY;
+	strcpy(&(blankEntryPtr->name[0]), "");
+
+	fsd.root_dir.numentries += 1;
+	fsd.root_dir.entry[filenameIndex] = *blankEntryPtr;
+
+	inodePtr->nlink -= 1;
+
+  	return OK;
 }
 
 #endif /* FS */
