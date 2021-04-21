@@ -369,6 +369,7 @@ int fs_open(char *filename, int flags) {
 		newInode.size   = 0;
 		memset(newInode.blocks, 0, INODEBLOCKS);
 		_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
+		fsd.inodes_used += 1;
 
 		struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
 		openFileDirectoryEntryPtr->inode_num = currEntry.inode_num;
@@ -474,8 +475,58 @@ int fs_write(int fd, void *buf, int nbytes) {
 }
 
 int fs_link(char *src_filename, char* dst_filename) {
-  	return SYSERR;
+	int inodeNum = -1;
+	int firstSpaceForOpenEntry = -1;
+
+	// iterate over all the files in the root directory
+	for(int i = 0; i < DIRECTORY_SIZE; i++) {
+		dirent_t currEntry = fsd.root_dir.entry[i];
+
+		// if the file name match then record the index and break
+		// there shouldn't be duplicate names so don't need to check if inodeNum has be assigned yet
+		if(strncmp(&(currEntry.name[0]), src_filename, FILENAMELEN) == 0) {
+			inodeNum = i;
+		}
+
+		// if there is an open index for a file and we don't have an index saved yet
+		// then save the index
+		if(currEntry.inode_num == EMPTY && firstSpaceForOpenEntry == -1) {
+			firstSpaceForOpenEntry = i;
+		}
+
+		// if we have found both the values we are looking for then stop searching
+		if(inodeNum != -1 && firstSpaceForOpenEntry != -1) {
+			break;
+		}
+	}
+
+	// there is no file with the name we are searching for
+	if(inodeNum == -1) {
+		kprintf("ERROR: A file does not exist with that name \n");
+		return SYSERR;
+	}
+	if(firstSpaceForOpenEntry == -1) {
+		kprintf("ERROR: No space for new entry \n");
+		return SYSERR;
+	}
+
+	struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
+	openFileDirectoryEntryPtr->inode_num = inodeNum;
+	strcpy(&(openFileDirectoryEntryPtr->name[0]), dst_filename);
+	
+	struct inode *inodePtr = (struct inode*) getmem(sizeof(inode_t));
+	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
+	//printf("inode.nlinks: %d\n", inodePtr->nlink);
+	inodePtr->nlink += 1;
+	//printf("inode.nlinks: %d\n", inodePtr->nlink);
+	//_fs_put_inode_by_num(dev0, inodeNum, inodePtr);
+
+	fsd.root_dir.numentries += 1;
+	fsd.root_dir.entry[firstSpaceForOpenEntry] = *openFileDirectoryEntryPtr;
+
+	return OK;
 }
+
 
 int fs_unlink(char *filename) {
   	return SYSERR;
