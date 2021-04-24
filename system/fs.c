@@ -4,10 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// what are these inode helper functions doing exactly
-// if a file is in the oft does that mean that it is open?
-
-#ifdef FS
+//#ifdef FS
 #include <fs.h>
 
 static fsystem_t fsd;
@@ -461,9 +458,12 @@ int fs_create(char *filename, int mode) {
 }
 
 int fs_seek(int fd, int offset) {
+	if(offset < 0 || offset > oft[fd].in.size) {
+		return SYSERR;
+	}
 
-  	return SYSERR;
-	
+	oft[fd].fileptr = offset;
+  	return OK;
 }
 
 int fs_read(int fd, void *buf, int nbytes) {
@@ -510,17 +510,20 @@ int fs_link(char *src_filename, char* dst_filename) {
 		//kprintf("ERROR: No space for new entry \n");
 		return SYSERR;
 	}
-
-	struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
-	openFileDirectoryEntryPtr->inode_num = inodeNum;
-	strcpy(&(openFileDirectoryEntryPtr->name[0]), dst_filename);
 	
+	//printf("inodeNum: %d\n", inodeNum);
 	struct inode *inodePtr = (struct inode*) getmem(sizeof(inode_t));
 	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
 	//printf("inode.nlinks: %d\n", inodePtr->nlink);
 	inodePtr->nlink += 1;
 	//printf("inode.nlinks: %d\n", inodePtr->nlink);
-	//_fs_put_inode_by_num(dev0, inodeNum, inodePtr);
+	_fs_put_inode_by_num(dev0, inodeNum, inodePtr);
+	//_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
+	//printf("inode.nlinks: %d\n", inodePtr->nlink);
+
+	struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
+	openFileDirectoryEntryPtr->inode_num = inodeNum;
+	strcpy(&(openFileDirectoryEntryPtr->name[0]), dst_filename);
 
 	fsd.root_dir.numentries += 1;
 	fsd.root_dir.entry[firstSpaceForOpenEntry] = *openFileDirectoryEntryPtr;
@@ -562,13 +565,19 @@ int fs_unlink(char *filename) {
 
 	if (inodePtr->nlink == 1) {
 		// If the nlinks of the inode is just 1, then delete the respective inode along with its data blocks as well
+		//kprintf("one nlink\n");
 
 		// turn the inode's blocks to all zeros
-		memset(inodePtr->blocks, 0, INODEBLOCKS);
+		//memset(inodePtr->blocks, EMPTY, INODEBLOCKS);
 
 		// write over old inode with blank one
 		struct inode blankInode;
 		blankInode.id = EMPTY;
+		blankInode.type   = EMPTY;
+		blankInode.nlink  = EMPTY;
+		blankInode.device = dev0;
+		blankInode.size   = EMPTY;
+		memset(blankInode.blocks, EMPTY, INODEBLOCKS);
 		_fs_put_inode_by_num(dev0, inodeNum, &blankInode);
 
 		fsd.inodes_used -= 1;
@@ -586,4 +595,4 @@ int fs_unlink(char *filename) {
   	return OK;
 }
 
-#endif /* FS */
+//#endif /* FS */
