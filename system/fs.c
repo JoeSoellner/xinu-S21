@@ -342,6 +342,7 @@ int fs_open(char *filename, int flags) {
 				// if the file is in the oft and close then just open it and exit function
 				if(currOpenFile.state == FSTATE_CLOSED) {
 					oft[j].state = FSTATE_OPEN;
+					oft[j].flag = flags;
 					return j;
 				}
 
@@ -398,10 +399,6 @@ int fs_close(int fd) {
 }
 
 int fs_create(char *filename, int mode) {
-	//kprintf("bs_mkdev: %d \n", bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS));
-	//kprintf("fs_mkfs: %d \n", fs_mkfs(0, DEFAULT_NUM_INODES));
-	//bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS);
-	//fs_mkfs(0, DEFAULT_NUM_INODES);
 	int firstSpaceForOpenEntry = -1;
 
 	// iterate over all the files in the root directory
