@@ -458,7 +458,10 @@ int fs_create(char *filename, int mode) {
 }
 
 int fs_seek(int fd, int offset) {
-	if(offset < 0 || offset > oft[fd].in.size) {
+	if(isbadfd(fd)) {
+		return SYSERR;
+	}
+	if(offset >= oft[fd].in.size || oft[fd].state == FSTATE_CLOSED) {
 		return SYSERR;
 	}
 
@@ -471,6 +474,36 @@ int fs_read(int fd, void *buf, int nbytes) {
 }
 
 int fs_write(int fd, void *buf, int nbytes) {
+	int MAX_FILE_SIZE = 5120;
+
+	for(int i = 0; i < nbytes; i++) {
+		// check that write will not write out of bounds
+			// if so then return SYSERR
+
+		// if there is not block and there is space for a block
+			// free_mask() -> finds empty blocks to allocate
+			// add a block
+		// if there is not space for a block
+			// return SYSERR
+
+		
+
+		// write a byte from buffer in block
+
+		//update size and fileptr
+	}
+
+	/*
+	if you use fsd.nblocks and the fs_{get/set/clear}maskbit functions, you don't have to deal with freemaskbytes at all
+	*/
+
+	/*
+	_fs_fileblock_to_diskblock
+	that converts fsd block number to disk block number (our is a kind of RAM disk)
+	*/
+
+	// fileptr / BLOCK_SIZE = a block number
+
   	return SYSERR;
 }
 
