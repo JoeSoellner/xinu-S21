@@ -59,14 +59,6 @@ shellcmd xsh_run(int nargs, char *args[]) {
 		/* create a process with the function as an entry point. */
 		resume(create((void *)fstest, 4096, 20, "fstest", 2, nargs, args));
 		return 1;
-	} else if (strncmp(args[0], "fsopen", 6) == 0) {
-		/* create a process with the function as an entry point. */
-		resume(create((void *)fs_open, 4096, 20, "fsopen", 2, "test", 11));
-		return 1;
-	} else if (strncmp(args[0], "fscreate", 8) == 0) {
-		/* create a process with the function as an entry point. */
-		resume(create((void *)fs_create, 4096, 20, "fscreate", 2, "test", 11));
-		return 1;
 	} else {
 		printPrograms();
 		return 1;

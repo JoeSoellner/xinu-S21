@@ -364,7 +364,7 @@ int fs_open(char *filename, int flags) {
 		newInode.nlink  = 0;
 		newInode.device = 0;
 		newInode.size   = 0;
-		memset(newInode.blocks, 0, INODEBLOCKS);
+		memset(newInode.blocks, EMPTY, INODEBLOCKS);
 		_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
 		fsd.inodes_used += 1;
 
@@ -438,7 +438,7 @@ int fs_create(char *filename, int mode) {
 	newInode.nlink  = 1;
 	newInode.device = dev0;
 	newInode.size   = 0;
-	memset(newInode.blocks, 0, INODEBLOCKS);
+	memset(newInode.blocks, EMPTY, INODEBLOCKS);
 	_fs_put_inode_by_num(dev0, inodeNum, &newInode);
 
 	struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
@@ -461,7 +461,7 @@ int fs_seek(int fd, int offset) {
 	if(isbadfd(fd)) {
 		return SYSERR;
 	}
-	if(offset >= oft[fd].in.size || oft[fd].state == FSTATE_CLOSED) {
+	if(offset < 0 || offset >= oft[fd].in.size || oft[fd].state == FSTATE_CLOSED) {
 		return SYSERR;
 	}
 
@@ -470,41 +470,90 @@ int fs_seek(int fd, int offset) {
 }
 
 int fs_read(int fd, void *buf, int nbytes) {
+	if(isbadfd(fd)) {
+		return SYSERR;
+	}
+	if(oft[fd].flag == O_WRONLY) {
+		return SYSERR;
+	}
+
+	// bs_bread(int dev, int block, int offset, void *buf, int len);
+
   	return SYSERR;
 }
 
 int fs_write(int fd, void *buf, int nbytes) {
-	int MAX_FILE_SIZE = 5120;
-
-	for(int i = 0; i < nbytes; i++) {
-		// check that write will not write out of bounds
-			// if so then return SYSERR
-
-		// if there is not block and there is space for a block
-			// free_mask() -> finds empty blocks to allocate
-			// add a block
-		// if there is not space for a block
-			// return SYSERR
-
-		
-
-		// write a byte from buffer in block
-
-		//update size and fileptr
+	if(isbadfd(fd)) {
+		return SYSERR;
+	}
+	if(oft[fd].flag == O_RDONLY) {
+		return SYSERR;
+	}
+	if(oft[fd].in.id == EMPTY) {
+		return SYSERR;
 	}
 
-	/*
-	if you use fsd.nblocks and the fs_{get/set/clear}maskbit functions, you don't have to deal with freemaskbytes at all
-	*/
+	for(int i = 0; i < nbytes; i++) {
+		int currBlockIndex = -1;
+		
+		// need to allocate a new block 
+		if(oft[fd].fileptr == oft[fd].in.size) {
+			for(int i = 0; i < MDEV_NUM_BLOCKS; i++) {
+				// this block is in use
+				if(fs_getmaskbit(i) == 1) {
+					continue;
+				}
 
-	/*
-	_fs_fileblock_to_diskblock
-	that converts fsd block number to disk block number (our is a kind of RAM disk)
-	*/
+				// this block is free and were gonna use it
+				fs_setmaskbit(i);
+				currBlockIndex = i;
+				break;
+			}
 
-	// fileptr / BLOCK_SIZE = a block number
+			if(currBlockIndex == -1) {
+				kprintf("ERROR: No more blocks left to allocate");
+				return SYSERR;
+			}
 
-  	return SYSERR;
+			int indexOfNewBlockInInode = -1;
+			// place the block in the inodes array of blocks
+			for(int i = 0; i < INODEBLOCKS; i++) {
+				// this index is being used by a block
+				if(oft[fd].in.blocks[i] != EMPTY) {
+					kprintf("i: %d, value: %d \n", oft[fd].in.blocks[i]);
+					continue;
+				}
+				
+				// this index is empty so we put our new block in
+				oft[fd].in.blocks[i] = currBlockIndex;
+				//_fs_put_inode_by_num(dev0, oft[fd].in.id, &(oft[fd].in)); needed ????
+				indexOfNewBlockInInode = i;
+				break;
+			}
+
+			if(indexOfNewBlockInInode == -1) {
+				kprintf("ERROR: Inode does not have any more space for blocks");
+				return SYSERR;
+			}
+
+			// add the size of the block (in bytes?) to the file size
+			oft[fd].in.size += MDEV_BLOCK_SIZE;
+		}
+
+		// get the location of the filePtr in the current block
+		int currBlockOffset = oft[fd].fileptr / MDEV_BLOCK_SIZE;
+		
+		// write a byte from buffer in block
+		bs_bwrite(dev0, currBlockIndex, currBlockOffset, buf, sizeof(byte));
+		// increment buffer so we can read next byte
+		buf = (char *) buf + 1;
+
+		// update fileptr
+		oft[fd].fileptr += 1;
+	}
+
+	// what if we write some bytes and but encouter an error???
+  	return nbytes;
 }
 
 int fs_link(char *src_filename, char* dst_filename) {
