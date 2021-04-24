@@ -494,46 +494,46 @@ int fs_write(int fd, void *buf, int nbytes) {
 	}
 
 	for(int i = 0; i < nbytes; i++) {
-		int currBlockIndex = -1;
-		
 		// need to allocate a new block 
 		if(oft[fd].fileptr == oft[fd].in.size) {
-			for(int i = 0; i < MDEV_NUM_BLOCKS; i++) {
+			int newBlockIndex = -1;
+
+			for(int j = 0; j < MDEV_NUM_BLOCKS; j++) {
 				// this block is in use
-				if(fs_getmaskbit(i) == 1) {
+				if(fs_getmaskbit(j) == 1) {
 					continue;
 				}
 
 				// this block is free and were gonna use it
-				fs_setmaskbit(i);
-				currBlockIndex = i;
+				fs_setmaskbit(j);
+				newBlockIndex = j;
 				break;
 			}
 
-			if(currBlockIndex == -1) {
-				kprintf("ERROR: No more blocks left to allocate");
+			if(newBlockIndex == -1) {
+				//kprintf("ERROR: No more blocks left to allocate");
 				return SYSERR;
 			}
 
 			int indexOfNewBlockInInode = -1;
 			// place the block in the inodes array of blocks
-			for(int i = 0; i < INODEBLOCKS; i++) {
+			for(int j = 0; j < INODEBLOCKS; j++) {
 				// this index is being used by a block
-				kprintf("i: %d, value: %d \n", i, oft[fd].in.blocks[i]);
-				if(oft[fd].in.blocks[i] != EMPTY) {
+				//kprintf("i: %d, value: %d \n", j, oft[fd].in.blocks[j]);
+				if(oft[fd].in.blocks[j] != EMPTY) {
 					//kprintf("i: %d, value: %d \n", i, oft[fd].in.blocks[i]);
 					continue;
 				}
 				
 				// this index is empty so we put our new block in
-				oft[fd].in.blocks[i] = currBlockIndex;
+				oft[fd].in.blocks[j] = newBlockIndex;
 				//_fs_put_inode_by_num(dev0, oft[fd].in.id, &(oft[fd].in)); needed ????
-				indexOfNewBlockInInode = i;
+				indexOfNewBlockInInode = j;
 				break;
 			}
 
 			if(indexOfNewBlockInInode == -1) {
-				kprintf("ERROR: Inode does not have any more space for blocks");
+				//kprintf("ERROR: Inode does not have any more space for blocks");
 				return SYSERR;
 			}
 
@@ -542,10 +542,12 @@ int fs_write(int fd, void *buf, int nbytes) {
 		}
 
 		// get the location of the filePtr in the current block
-		int currBlockOffset = oft[fd].fileptr / MDEV_BLOCK_SIZE;
+		int currBlockOffset = oft[fd].fileptr % MDEV_BLOCK_SIZE;
+		int currBlock = oft[fd].fileptr / MDEV_BLOCK_SIZE;
 		
 		// write a byte from buffer in block
-		bs_bwrite(dev0, currBlockIndex, currBlockOffset, buf, sizeof(byte));
+		bs_bwrite(dev0, currBlock, currBlockOffset, buf, sizeof(byte));
+		//kprintf("numBytesWritten: %d, charWritten: %c \n", i + 1, *((char *) buf));
 		// increment buffer so we can read next byte
 		buf = (char *) buf + 1;
 
@@ -660,7 +662,7 @@ int fs_unlink(char *filename) {
 		blankInode.nlink  = EMPTY;
 		blankInode.device = dev0;
 		blankInode.size   = EMPTY;
-		memset(blankInode.blocks, EMPTY, INODEBLOCKS);
+		memset(blankInode.blocks, EMPTY, INODEBLOCKS*sizeof(*blankInode.blocks));
 		_fs_put_inode_by_num(dev0, inodeNum, &blankInode);
 
 		fsd.inodes_used -= 1;
