@@ -364,7 +364,7 @@ int fs_open(char *filename, int flags) {
 		newInode.nlink  = 0;
 		newInode.device = 0;
 		newInode.size   = 0;
-		memset(newInode.blocks, EMPTY, INODEBLOCKS);
+		memset(newInode.blocks, EMPTY, INODEBLOCKS*sizeof(*newInode.blocks));
 		_fs_get_inode_by_num(dev0, currEntry.inode_num, &newInode);
 		fsd.inodes_used += 1;
 
@@ -438,7 +438,7 @@ int fs_create(char *filename, int mode) {
 	newInode.nlink  = 1;
 	newInode.device = dev0;
 	newInode.size   = 0;
-	memset(newInode.blocks, EMPTY, INODEBLOCKS);
+	memset(newInode.blocks, EMPTY, INODEBLOCKS*sizeof(*newInode.blocks));
 	_fs_put_inode_by_num(dev0, inodeNum, &newInode);
 
 	struct dirent *openFileDirectoryEntryPtr = (struct dirent*) getmem(sizeof(dirent_t));
@@ -511,7 +511,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(currBlockIndex == -1) {
-				//kprintf("ERROR: No more blocks left to allocate");
+				kprintf("ERROR: No more blocks left to allocate");
 				return SYSERR;
 			}
 
@@ -519,6 +519,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			// place the block in the inodes array of blocks
 			for(int i = 0; i < INODEBLOCKS; i++) {
 				// this index is being used by a block
+				kprintf("i: %d, value: %d \n", i, oft[fd].in.blocks[i]);
 				if(oft[fd].in.blocks[i] != EMPTY) {
 					//kprintf("i: %d, value: %d \n", i, oft[fd].in.blocks[i]);
 					continue;
@@ -532,7 +533,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(indexOfNewBlockInInode == -1) {
-				//kprintf("ERROR: Inode does not have any more space for blocks");
+				kprintf("ERROR: Inode does not have any more space for blocks");
 				return SYSERR;
 			}
 

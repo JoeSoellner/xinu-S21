@@ -1,7 +1,7 @@
 #include <xinu.h>
 #include <fs.h>
 
-#ifdef FS
+//#ifdef FS
 
 /**
  * TEST
@@ -136,20 +136,44 @@ int fstest_testbitmask(void) {
 int fstest_mkdev() {
 
   int i;
-
-  for (i = 0; i < 10; i++) {
+  // awful way to structure my tests but i only need a short term solution
+  for (i = 0; i < 1; i++) {
     ASSERT_PASS(bs_mkdev(0, MDEV_BLOCK_SIZE, MDEV_NUM_BLOCKS))
     ASSERT_PASS(fs_mkfs(0, DEFAULT_NUM_INODES))
 
     int createResult = fs_create("test", O_CREAT);
     ASSERT_PASS(createResult)
     ASSERT_PASS(fs_close(createResult))
-    //fs_print_dir();
-
-    //fs_print_fsd();
-
-    fs_print_oft();
     ASSERT_FAIL(fs_close(createResult))
+    ASSERT_PASS(fs_open("test", O_RDWR))
+    ASSERT_FAIL(fs_open("test", O_RDWR))
+
+    //fs_print_inode(0);
+
+    ASSERT_PASS(fs_link("test", "test2"))
+    ASSERT_PASS(fs_link("test2", "test3"))
+    ASSERT_PASS(fs_link("test3", "test4"))
+    ASSERT_FAIL(fs_link("test", "test2"))
+
+    //fs_print_oft();
+
+    ASSERT_PASS(fs_write(0, (void *) "1234567890", 8))
+    //ASSERT_PASS(fs_write(0, (void *) "i", 1))
+
+    //ASSERT_PASS(fs_unlink("test2"))
+    //ASSERT_PASS(fs_unlink("test"))
+
+    fs_print_dir();
+    fs_print_inode(0);
+    fs_printfreemask();
+    void *buffer = getmem(sizeof(byte) * 8);
+    bs_bread(0, 2, 0, buffer, 64);
+    printf("%s\n", (char *) buffer);
+
+    //fs_print_dir();
+    //fs_print_fsd();
+    //fs_print_oft();
+    //fs_print_inode(0);
 
     ASSERT_PASS(fs_freefs(0))
     ASSERT_PASS(bs_freedev(0))
@@ -157,7 +181,7 @@ int fstest_mkdev() {
 
   return OK;
 }
-#endif
+//#endif
 
 
 int fstest(int nargs, char *args[]) {
