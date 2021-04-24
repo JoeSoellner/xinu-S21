@@ -511,7 +511,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(currBlockIndex == -1) {
-				kprintf("ERROR: No more blocks left to allocate");
+				//kprintf("ERROR: No more blocks left to allocate");
 				return SYSERR;
 			}
 
@@ -520,7 +520,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			for(int i = 0; i < INODEBLOCKS; i++) {
 				// this index is being used by a block
 				if(oft[fd].in.blocks[i] != EMPTY) {
-					kprintf("i: %d, value: %d \n", oft[fd].in.blocks[i]);
+					//kprintf("i: %d, value: %d \n", i, oft[fd].in.blocks[i]);
 					continue;
 				}
 				
@@ -532,7 +532,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(indexOfNewBlockInInode == -1) {
-				kprintf("ERROR: Inode does not have any more space for blocks");
+				//kprintf("ERROR: Inode does not have any more space for blocks");
 				return SYSERR;
 			}
 
