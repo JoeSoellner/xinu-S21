@@ -157,17 +157,21 @@ int fstest_mkdev() {
 
     //fs_print_oft();
 
-    ASSERT_PASS(fs_write(0, (void *) "1234567890", 8))
+    void *buffer = getmem(sizeof(byte) * 10);
+    ASSERT_PASS(fs_write(0, (void *) "1234567890", 10))
+    ASSERT_PASS(fs_seek(0, 0))
+    fs_print_inode(0);
+    ASSERT_PASS(fs_read(0, buffer, 10))
     //ASSERT_PASS(fs_write(0, (void *) "i", 1))
 
     //ASSERT_PASS(fs_unlink("test2"))
     //ASSERT_PASS(fs_unlink("test"))
 
-    fs_print_dir();
+    //fs_print_dir();
     fs_print_inode(0);
-    fs_printfreemask();
-    void *buffer = getmem(sizeof(byte) * 8);
-    bs_bread(0, 2, 0, buffer, 64);
+    //fs_printfreemask();
+    //void *buffer = getmem(sizeof(byte) * 8);
+    //bs_bread(0, 2, 0, buffer, 80);
     printf("%s\n", (char *) buffer);
 
     //fs_print_dir();
