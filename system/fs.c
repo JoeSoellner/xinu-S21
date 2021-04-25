@@ -646,6 +646,13 @@ int fs_link(char *src_filename, char* dst_filename) {
 	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
 	//printf("inode.nlinks: %d\n", inodePtr->nlink);
 	inodePtr->nlink += 1;
+
+	for (int i = 0; i < NUM_FD; i++) {
+		if(oft[i].de->inode_num == inodeNum) {
+			oft[i].in.nlink += 1;
+		}
+  	}
+
 	//printf("inode.nlinks: %d\n", inodePtr->nlink);
 	_fs_put_inode_by_num(dev0, inodeNum, inodePtr);
 	//_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
@@ -719,8 +726,13 @@ int fs_unlink(char *filename) {
 
 	fsd.root_dir.numentries += 1;
 	fsd.root_dir.entry[filenameIndex] = *blankEntryPtr;
-
+	
 	inodePtr->nlink -= 1;
+	for (int i = 0; i < NUM_FD; i++) {
+		if(oft[i].de->inode_num == inodeNum) {
+			oft[i].in.nlink -= 1;
+		}
+  	}
 
   	return OK;
 }
