@@ -556,7 +556,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 
 			if(newBlockIndex == -1) {
 				//kprintf("ERROR: No more blocks left to allocate\n");
-				return SYSERR;
+				return i;
 			}
 
 			int indexOfNewBlockInInode = -1;
@@ -578,7 +578,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 
 			if(indexOfNewBlockInInode == -1) {
 				//kprintf("ERROR: Inode does not have any more space for blocks\n");
-				return SYSERR;
+				return i;
 			}
 
 			// add the size of the block (in bytes?) to the file size
