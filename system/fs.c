@@ -498,8 +498,8 @@ int fs_read(int fd, void *buf, int nbytes) {
 		// no more space to read from
 		if(oft[fd].fileptr > oft[fd].in.size) {
 			//kprintf("ERROR: No more space to read from\n");
-			//return nbytes;
-			return SYSERR;
+			return nbytes;
+			//return SYSERR;
 		}
 
 		// get the location of the filePtr in the current block
@@ -621,18 +621,18 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 		// if there is a fill with the name we are trying to use then error
 		if(strncmp(&(currEntry.name[0]), dst_filename, FILENAMELEN) == 0) {
-			//kprintf("ERROR: Already a file with that name, no duplicate filenames \n");
+			kprintf("ERROR: Already a file with that name, no duplicate filenames \n");
 			return SYSERR;
 		}
 	}
 
 	// there is no file with the name we are searching for
 	if(inodeNum == -1) {
-		//kprintf("ERROR: A file does not exist with that name \n");
+		kprintf("ERROR: A file does not exist with that name \n");
 		return SYSERR;
 	}
 	if(firstSpaceForOpenEntry == -1) {
-		//kprintf("ERROR: No space for new entry \n");
+		kprintf("ERROR: No space for new entry \n");
 		return SYSERR;
 	}
 	
@@ -674,7 +674,7 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 	// no spaces for open file
 	if(firstSpaceForOpenFile == -1) {
-		//kprintf("no space for the file in open file table\n");
+		kprintf("ERROR: no space for the file in open file table\n");
 		return SYSERR;
 	}
 
@@ -704,7 +704,7 @@ int fs_unlink(char *filename) {
 
 	// there is no file with the name we are searching for
 	if(filenameIndex == -1) {
-		//kprintf("ERROR: A file does not exist with that name \n");
+		kprintf("ERROR: A file does not exist with that name \n");
 		return SYSERR;
 	}
 
@@ -714,7 +714,7 @@ int fs_unlink(char *filename) {
 	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
 
 	if (inodePtr->nlink < 1) {
-		//kprintf("ERROR: Inode has no links to it??? \n");
+		kprintf("ERROR: Inode has no links to it??? \n");
 		return SYSERR;
 	}
 
@@ -744,6 +744,35 @@ int fs_unlink(char *filename) {
 
 	fsd.root_dir.numentries += 1;
 	fsd.root_dir.entry[filenameIndex] = *blankEntryPtr;
+
+	int firstSpaceForOpenFile = -1;
+	// check if the file is already open
+	for(int i = 0; i < NUM_FD; i++) {
+		filetable_t currOpenFile = oft[i];
+
+		// assuming that all open files are at beginning and all empty spaces are at the end
+		// remember the index of the first open spot
+		if(filename == currOpenFile.de->name) {
+			firstSpaceForOpenFile = i;
+		}
+	}
+
+	// no spaces for open file
+	if(firstSpaceForOpenFile == -1) {
+		kprintf("ERROR: no space for the file in open file table\n");
+		return SYSERR;
+	}
+
+    oft[firstSpaceForOpenFile].state     = 0;
+    oft[firstSpaceForOpenFile].fileptr   = 0;
+    oft[firstSpaceForOpenFile].de        = NULL;
+    oft[firstSpaceForOpenFile].in.id     = EMPTY;
+    oft[firstSpaceForOpenFile].in.type   = 0;
+    oft[firstSpaceForOpenFile].in.nlink  = 0;
+    oft[firstSpaceForOpenFile].in.device = 0;
+    oft[firstSpaceForOpenFile].in.size   = 0;
+    memset(oft[firstSpaceForOpenFile].in.blocks, 0, INODEBLOCKS);
+    oft[filenameIndex].flag      = 0;
 	
 	inodePtr->nlink -= 1;
 	for (int i = 0; i < NUM_FD; i++) {
