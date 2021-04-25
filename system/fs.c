@@ -470,17 +470,59 @@ int fs_read(int fd, void *buf, int nbytes) {
 	if(isbadfd(fd)) {
 		return SYSERR;
 	}
+	if(nbytes <= 0) {
+		return SYSERR;
+	}
 	if(oft[fd].flag == O_WRONLY) {
 		return SYSERR;
 	}
+	if(oft[fd].in.id == EMPTY) {
+		return SYSERR;
+	}
 
-	// bs_bread(int dev, int block, int offset, void *buf, int len);
+	int numOfBlocksOfInodeUsed = 0;
+	// find the number of blocks in use
+	for(int i = 0; i < INODEBLOCKS; i++) {
+		// this index isnt being used by a block
+		if(oft[fd].in.blocks[i] != EMPTY) {
+			// assuming all the empty blocks are at the end
+			break;
+		}
+		
+		numOfBlocksOfInodeUsed += 1;
+	}
 
-  	return SYSERR;
+	// use an extra pointer to add btyes
+	// this way we can do pointer math and buf still points to head
+	void *bufferIter = buf;
+	for(int i = 0; i < nbytes; i++) {
+		// no more space to read from
+		if(oft[fd].fileptr > numOfBlocksOfInodeUsed * MDEV_BLOCK_SIZE) {
+			return nbytes;
+			//return SYSERR;
+		}
+
+		// get the location of the filePtr in the current block
+		int currBlockOffset = oft[fd].fileptr % MDEV_BLOCK_SIZE;
+		int blockIndexInInode = oft[fd].fileptr / MDEV_BLOCK_SIZE;
+		
+		// read a byte from block into buffer
+		bs_bread(dev0, oft[fd].in.blocks[blockIndexInInode], currBlockOffset, bufferIter, sizeof(byte));
+		// increment buffer so we can read next byte
+		bufferIter = (char *) bufferIter + 1;
+
+		// update fileptr
+		oft[fd].fileptr += 1;
+	}
+
+  	return nbytes;
 }
 
 int fs_write(int fd, void *buf, int nbytes) {
 	if(isbadfd(fd)) {
+		return SYSERR;
+	}
+	if(nbytes <= 0) {
 		return SYSERR;
 	}
 	if(oft[fd].flag == O_RDONLY) {
