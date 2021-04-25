@@ -470,7 +470,7 @@ int fs_read(int fd, void *buf, int nbytes) {
 	if(isbadfd(fd)) {
 		return SYSERR;
 	}
-	if(nbytes <= 0) {
+	if(nbytes < 0) {
 		return SYSERR;
 	}
 	if(oft[fd].flag == O_WRONLY) {
@@ -500,8 +500,8 @@ int fs_read(int fd, void *buf, int nbytes) {
 		// no more space to read from
 		if(oft[fd].fileptr > oft[fd].in.size) {
 			//kprintf("ERROR: No more space to read from\n");
-			return nbytes;
-			//return SYSERR;
+			//return nbytes;
+			return SYSERR;
 		}
 
 		// get the location of the filePtr in the current block
@@ -527,7 +527,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 	if(isbadfd(fd)) {
 		return SYSERR;
 	}
-	if(nbytes <= 0) {
+	if(nbytes < 0) {
 		return SYSERR;
 	}
 	if(oft[fd].flag == O_RDONLY) {
