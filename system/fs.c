@@ -204,6 +204,7 @@ void fs_print_inode(int fd) {
   printf("State:   %d\n", oft[fd].state);
   printf("Flag:    %d\n", oft[fd].flag);
   printf("Fileptr: %d\n", oft[fd].fileptr);
+  //printf("Id:      %s\n", oft[fd].in.id);
   printf("Type:    %d\n", oft[fd].in.type);
   printf("nlink:   %d\n", oft[fd].in.nlink);
   printf("device:  %d\n", oft[fd].in.device);
@@ -360,7 +361,7 @@ int fs_open(char *filename, int flags) {
 
 		// create structs to put in open file table
 		struct inode newInode;
-		newInode.id     = EMPTY;
+		newInode.id     = 0;
 		newInode.type   = 0;
 		newInode.nlink  = 0;
 		newInode.device = 0;
@@ -476,9 +477,6 @@ int fs_read(int fd, void *buf, int nbytes) {
 	if(oft[fd].flag == O_WRONLY) {
 		return SYSERR;
 	}
-	if(oft[fd].in.id == EMPTY) {
-		return SYSERR;
-	}
 
 	int numOfBlocksOfInodeUsed = 0;
 	// find the number of blocks in use
@@ -531,9 +529,6 @@ int fs_write(int fd, void *buf, int nbytes) {
 		return SYSERR;
 	}
 	if(oft[fd].flag == O_RDONLY) {
-		return SYSERR;
-	}
-	if(oft[fd].in.id == EMPTY) {
 		return SYSERR;
 	}
 
@@ -665,9 +660,32 @@ int fs_link(char *src_filename, char* dst_filename) {
 	fsd.root_dir.numentries += 1;
 	fsd.root_dir.entry[firstSpaceForOpenEntry] = *openFileDirectoryEntryPtr;
 
+	int firstSpaceForOpenFile = -1;
+	// check if the file is already open
+	for(int i = 0; i < NUM_FD; i++) {
+		filetable_t currOpenFile = oft[i];
+
+		// assuming that all open files are at beginning and all empty spaces are at the end
+		// remember the index of the first open spot
+		if(currOpenFile.de == NULL) {
+			firstSpaceForOpenFile = i;
+		}
+	}
+
+	// no spaces for open file
+	if(firstSpaceForOpenFile == -1) {
+		//kprintf("no space for the file in open file table\n");
+		return SYSERR;
+	}
+
+	oft[firstSpaceForOpenFile].state = FSTATE_OPEN;
+	oft[firstSpaceForOpenFile].fileptr = 0;
+	oft[firstSpaceForOpenFile].de = openFileDirectoryEntryPtr;
+	oft[firstSpaceForOpenFile].in = *inodePtr;
+	oft[firstSpaceForOpenFile].flag = O_RDWR;
+
 	return OK;
 }
-
 
 int fs_unlink(char *filename) {
 	int filenameIndex = -1;
@@ -696,7 +714,7 @@ int fs_unlink(char *filename) {
 	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
 
 	if (inodePtr->nlink < 1) {
-		kprintf("ERROR: Inode has no links to it??? \n");
+		//kprintf("ERROR: Inode has no links to it??? \n");
 		return SYSERR;
 	}
 
