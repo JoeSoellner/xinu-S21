@@ -621,18 +621,18 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 		// if there is a fill with the name we are trying to use then error
 		if(strncmp(&(currEntry.name[0]), dst_filename, FILENAMELEN) == 0) {
-			kprintf("ERROR: Already a file with that name, no duplicate filenames \n");
+			//kprintf("ERROR: Already a file with that name, no duplicate filenames \n");
 			return SYSERR;
 		}
 	}
 
 	// there is no file with the name we are searching for
 	if(inodeNum == -1) {
-		kprintf("ERROR: A file does not exist with that name \n");
+		//kprintf("ERROR: A file does not exist with that name \n");
 		return SYSERR;
 	}
 	if(firstSpaceForOpenEntry == -1) {
-		kprintf("ERROR: No space for new entry \n");
+		//kprintf("ERROR: No space for new entry \n");
 		return SYSERR;
 	}
 	
@@ -674,7 +674,7 @@ int fs_link(char *src_filename, char* dst_filename) {
 
 	// no spaces for open file
 	if(firstSpaceForOpenFile == -1) {
-		kprintf("ERROR: no space for the file in open file table\n");
+		//kprintf("ERROR: no space for the file in open file table\n");
 		return SYSERR;
 	}
 
@@ -704,7 +704,7 @@ int fs_unlink(char *filename) {
 
 	// there is no file with the name we are searching for
 	if(filenameIndex == -1) {
-		kprintf("ERROR: A file does not exist with that name \n");
+		//kprintf("ERROR: A file does not exist with that name \n");
 		return SYSERR;
 	}
 
@@ -714,7 +714,7 @@ int fs_unlink(char *filename) {
 	_fs_get_inode_by_num(dev0, inodeNum, inodePtr);
 
 	if (inodePtr->nlink < 1) {
-		kprintf("ERROR: Inode has no links to it??? \n");
+		//kprintf("ERROR: Inode has no links to it??? \n");
 		return SYSERR;
 	}
 
@@ -759,7 +759,7 @@ int fs_unlink(char *filename) {
 
 	// no spaces for open file
 	if(firstSpaceForOpenFile == -1) {
-		kprintf("ERROR: no space for the file in open file table\n");
+		//kprintf("ERROR: no space for the file in open file table\n");
 		return SYSERR;
 	}
 
