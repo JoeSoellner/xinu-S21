@@ -484,20 +484,22 @@ int fs_read(int fd, void *buf, int nbytes) {
 	// find the number of blocks in use
 	for(int i = 0; i < INODEBLOCKS; i++) {
 		// this index isnt being used by a block
-		if(oft[fd].in.blocks[i] != EMPTY) {
+		if(oft[fd].in.blocks[i] == EMPTY) {
 			// assuming all the empty blocks are at the end
 			break;
 		}
 		
 		numOfBlocksOfInodeUsed += 1;
 	}
+	//kprintf("numOfBlocksOfInodeUsed: %d \n", numOfBlocksOfInodeUsed);
 
 	// use an extra pointer to add btyes
 	// this way we can do pointer math and buf still points to head
 	void *bufferIter = buf;
 	for(int i = 0; i < nbytes; i++) {
 		// no more space to read from
-		if(oft[fd].fileptr > numOfBlocksOfInodeUsed * MDEV_BLOCK_SIZE) {
+		if(oft[fd].fileptr > oft[fd].in.size) {
+			//kprintf("ERROR: No more space to read from\n");
 			return nbytes;
 			//return SYSERR;
 		}
@@ -507,7 +509,10 @@ int fs_read(int fd, void *buf, int nbytes) {
 		int blockIndexInInode = oft[fd].fileptr / MDEV_BLOCK_SIZE;
 		
 		// read a byte from block into buffer
-		bs_bread(dev0, oft[fd].in.blocks[blockIndexInInode], currBlockOffset, bufferIter, sizeof(byte));
+		//kprintf("block: %d, offset: %d \n", oft[fd].in.blocks[blockIndexInInode], currBlockOffset);
+		//char currChar = '1';
+		bs_bread(dev0, oft[fd].in.blocks[blockIndexInInode], currBlockOffset, (void *) bufferIter, sizeof(byte));
+		//kprintf("numBytesWritten: %d, charRead: %c \n", i + 1, *((char *) bufferIter));
 		// increment buffer so we can read next byte
 		bufferIter = (char *) bufferIter + 1;
 
@@ -550,7 +555,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(newBlockIndex == -1) {
-				//kprintf("ERROR: No more blocks left to allocate");
+				//kprintf("ERROR: No more blocks left to allocate\n");
 				return SYSERR;
 			}
 
@@ -572,7 +577,7 @@ int fs_write(int fd, void *buf, int nbytes) {
 			}
 
 			if(indexOfNewBlockInInode == -1) {
-				//kprintf("ERROR: Inode does not have any more space for blocks");
+				//kprintf("ERROR: Inode does not have any more space for blocks\n");
 				return SYSERR;
 			}
 
@@ -582,10 +587,11 @@ int fs_write(int fd, void *buf, int nbytes) {
 
 		// get the location of the filePtr in the current block
 		int currBlockOffset = oft[fd].fileptr % MDEV_BLOCK_SIZE;
-		int currBlock = oft[fd].fileptr / MDEV_BLOCK_SIZE;
+		int blockIndexInInode = oft[fd].fileptr / MDEV_BLOCK_SIZE;
 		
 		// write a byte from buffer in block
-		bs_bwrite(dev0, currBlock, currBlockOffset, buf, sizeof(byte));
+		//kprintf("block: %d, offset: %d \n", oft[fd].in.blocks[blockIndexInInode], currBlockOffset);
+		bs_bwrite(dev0, oft[fd].in.blocks[blockIndexInInode], currBlockOffset, buf, sizeof(byte));
 		//kprintf("numBytesWritten: %d, charWritten: %c \n", i + 1, *((char *) buf));
 		// increment buffer so we can read next byte
 		buf = (char *) buf + 1;
