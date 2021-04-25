@@ -615,7 +615,7 @@ int fs_link(char *src_filename, char* dst_filename) {
 		// if the file name matches then record the index and break
 		// there shouldn't be duplicate names so don't need to check if inodeNum has be assigned yet
 		if(strncmp(&(currEntry.name[0]), src_filename, FILENAMELEN) == 0) {
-			inodeNum = i;
+			inodeNum = fsd.root_dir.entry[i].inode_num;
 		}
 
 		// if there is an open index for a file and we don't have an index saved yet
